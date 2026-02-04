@@ -1,119 +1,97 @@
-<!--
-  /\ \ \__ _| |_ _ __ ___     /\/\   __ _  ___ _ __ ___  
- /  \/ / _` | __| '__/ _ \   /    \ / _` |/ __| '__/ _ \ 
-/ /\  / (_| | |_| | | (_) | / /\/\ \ (_| | (__| | | (_) |
-\_\ \/ \__,_|\__|_|  \___/  \/    \/\__,_|\___|_|  \___/                                                    
+# NatroMacroAddon
 
-Thanks for downloading Natro Macro!
+This repository is an addon fork of **Natro Macro**.
 
-To start the macro, just open 'START.bat'!
+It currently includes improvements around **Bloom farming** and **Bloom-related quests** (e.g. Bucko/Riley/Polar “Bloom” objectives), and it is intended to grow with more features over time.
 
-If you need help or want to discuss, join our Discord server!
+## ✨ Features
 
-Feel free to give us a Star on GitHub!
+- __Bloom farming__: in every cycle it collects petals on the selected field for the set duration.
+- __Bloom quests__: supports quests that require collecting bloom petals.
 
-IMPORTANT:
-Make sure you are only downloading from an official source!
-The only official sources are:
- - our GitHub page (https://github.com/NatroTeam/NatroMacro)
- - our Discord server (https://discord.gg/natromacro)
+## 🛠️ Installation
+_Basically the same as `Natro Macro`_
 
->>> IGNORE BELOW THIS LINE <<<
--->
-
-<!-- no official site warning -->
-> [!CAUTION]
-> We do **not** have a website. The only official place to download Natro Macro is this repository and [discord.gg/natromacro][discord-link].
-
-<div align="center">
-
-<!-- logo banner -->
-<picture>
-  <source width="200px" media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/NatroTeam/.github/main/profile/assets/banners/natro-logo-light.svg"> <!-- light theme (black text) -->
-  <img src="https://raw.githubusercontent.com/NatroTeam/.github/main/profile/assets/banners/natro-logo-dark.svg"> <!-- dark theme (light text) -->
-</picture>
-<br>
-
-<!-- shields and contents -->
-[![][latest-release-shield]][latest-release-link]
-[![][downloads-shield]][downloads-link]
-[![][discord-shield]][discord-link]
-<br>
-An open-source Bee Swarm Simulator macro written in AutoHotkey!<br>
-</div>
-
-
-<a name="installation"><h2>🛠️ Installation</h2></a>
-
-1. Download `Natro_Macro_v#.#.#.zip` from the [latest release][latest-release-link]
-2. Open `Natro_Macro_v#.#.#` and double-click the folder inside
+1. Download/clone this repository
+2. Open `NatroMacroAddon` and double-click the folder inside
 3. Run `START.bat` and wait for the macro to load
 
+## ⚙️ Usage
 
-<a name="community"><h2>🌎 Community</h2></a>
+### Bloom
+>These settings only apply during the gather cycle bloom farming
 
-[**Join us on Discord!**][discord-link]
+- Enable it with the `✅Enable` checkbox next to the __Bloom__ text
+- Set the field with the `Field` dropdown
+- Set the duration in the `Mins` textbox
+- Set the `To Hive By` method with the arrows
+- Set the sprinkler placement method:
 
-This is where you can connect with the community, access guides and help channels, and download custom patterns, paths, and themes!
+	<table style="border:none;border-collapse:collapse;border-spacing:0;">
+		<tr>
+			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>None</code></td>
+			<td style="border:none;padding:0 0 0 10px;"><em>no checkbox enabled</em></td>
+		</tr>
+		<tr>
+			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>Sprinkler on bloom</code></td>
+			<td style="border:none;padding:0 0 0 10px;"><em>places the sprinkler down on each bloom</em></td>
+		</tr>
+		<tr>
+			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>Sprinkler on field</code></td>
+			<td style="border:none;padding:0 0 0 10px;"><em>places the sprinkler down upon arrival at the field</em></td>
+		</tr>
+	</table>
 
-Discord is our main platform for troubleshooting and update news!
+___The sprinkler settings also apply during bloom quests___
 
-<a href="https://discord.gg/natromacro">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="http://invidget.switchblade.xyz/natromacro?theme=light"> <!-- light theme -->
-    <img alt="discord-invite-widget" width=500 src="http://invidget.switchblade.xyz/natromacro"> <!-- dark theme -->
-  </picture>
-</a>
+### Bloom Quest
+> These settings only apply during bloom quests
 
+- Set the maximum duration limit in the `Max Mins` textbox
+- Set the fields for each petal color with the `"Color" Petal` dropdowns
 
-<a name="contributing"><h2>⌨️ Contributing</h2></a>
+___The ___
 
-Natro Macro is an open-source project. We greatly appreciate all contributions, whether you are helping us fix bugs or suggesting new features. If you want to get started, read our [Contributing Guidelines][contributing-link] first.
+<br/>
+Bloom quest handling is implemented for:
 
-- **Bugs**: If you find an issue or run into an error message while using the macro, please create a [bug report][bug-report-link].
-- **Suggestions**: If you have an idea for a feature that you'd like to see in the macro, please submit a [suggestion][suggestion-link].
-- **Code/Development**: If you are interested in developing features for the macro, check out the development repository @ [NatroMacroDev][natromacrodev-link]
+- **Polar Bear** quests
+- **Gifted Riley Bee** quests
+- **Gifted Bucko Bee** quests
 
-For discussions, please join us on [Discord][discord-link] instead!
+## ⚠️ Limitations / Known Issues
 
+### Missing fields
+__No reliable alignment pattern:__
+- Mountain Top field
+- Stump field
 
-<a name="credits"><h2>💝 Credits</h2></a>
+__Too many obstacles on the field:__
+- Mushroom field
 
-Natro Macro wouldn't be possible without the help and inspiration of many extraordinary individuals.<br>
-We want to show our gratitude to all of you, so please check out our [list of credits][credits-link]!
+### Field limit
+A screen limit has been set for closely neighboring fields, beyond which blooms are not detected, to prevent moving to other fields.<br/>
+In some cases, this may cause blooms that are technically within the correct field but outside the limit to go undetected. <br/>
+This issue has been resolved in certain fields; however, it does not work when fog is present, so the limit remains in place. <br/>
+As a result, alignment moves the player to a position within the field where the majority of blooms can be detected.
 
-Thank you all for your hard work and support!
+### Misdetection
 
+Balloons use the same icon that the macro searches for when detecting blooms. As a result, balloons may occasionally be misdetected as blooms. <br/>
+The frequency of this issue has been reduced, but it can still occur. This does not significantly affect bloom farming, <br/>
+as the macro typically misdetects it only once or twice before continuing to collect petals. <br/>
+However, in rare cases, this may cause drifting off the field, and no reliable solution is currently available. <br/>
+Puffshrooms also use the same icon; however, this issue does not occur with them.
 
-<a name="stars"><h2>🌠 Stars</h2></a>
+### Early Stage
 
-If Natro Macro helped you, let us know by giving it a ⭐ $\color{yellow}{\textsf{Star}}$ on GitHub!<br>
-You can do this by clicking the Star button at the top of the page!
+Bloom farming has been tested on both main and beginner profiles, as well as across multiple screen resolutions, and it seems to work in all cases. <br/>
+However, this does not guarantee that it will work for everyone 100% of the time. This project is still in a very early stage and is not as polished as Natro Macro. <br/>
+If major issues occur, efforts will be made to resolve them when possible.
 
-<a href="https://github.com/NatroTeam/NatroMacro/stargazers">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="http://reporoster.com/stars/NatroTeam/NatroMacro"> <!-- light theme -->
-    <img alt="stargazer-widget" src="http://reporoster.com/stars/dark/NatroTeam/NatroMacro"> <!-- dark theme -->
-  </picture>
-</a>
+## ©️ Credits / License
 
-<a name="license"><details><summary><h4>📝 License</h4></summary></a>
-Copyright © [Natro Team][github-profile-link]<br>
-This project is licensed under [GNU GPL v3.0](./LICENSE.md)
+This project is a fork of **Natro Macro**.
 
-</details>
-
-<!-- links -->
-[latest-release-shield]: https://img.shields.io/github/v/release/NatroTeam/NatroMacro?logo=github&logoColor=white&labelColor=black&color=faa125
-[latest-release-link]: https://github.com/NatroTeam/NatroMacro/releases/latest
-[downloads-shield]: https://img.shields.io/github/downloads/NatroTeam/NatroMacro/total?label=downloads&labelColor=black&color=40ca53&logo=data:image/svg%2bxml;base64,PHN2ZwogICB2aWV3Qm94PSIwIDAgMjQgMjQiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgICBmaWxsPSIjZmZmIgogICAgIGQ9Ik0gMTIsMC4yMDk2MTUxNSBBIDExLjc5MDM4NSwxMS43OTAzODUgMCAxIDAgMjMuNzkwMzg1LDEyIDExLjc5MDM4NSwxMS43OTAzODUgMCAwIDAgMTIsMC4yMDk2MTUxNSBaIE0gOS4zMDAwMDE5LDkuOTgzODQ0MiAxMC44MjA5NjIsMTEuNTE2NTk0IFYgNC45MjU3NjkxIGggMi4zNTgwNzYgViAxMS41MTY1OTQgTCAxNC42OTk5OTgsOS45OTU2MzQ2IDE2LjM2MjQ0MiwxMS42NTgwNzkgMTIsMTYuMDIwNTIxIDcuNjI1NzY3MiwxMS42NTgwNzkgWiBNIDE2LjcxNjE1NCwxOS4wNzQyMzEgSCA3LjI4Mzg0NjEgdiAtMi4zNTgwNzcgaCA5LjQzMjMwNzkgeiIKICAgICAvPgo8L3N2Zz4K
-[downloads-link]: https://github.com/NatroTeam/NatroMacro/releases
-[discord-shield]: https://img.shields.io/discord/1012610056921038868?logo=discord&logoColor=white&label=discord&labelColor=black&color=5865f2
-[discord-link]: https://discord.gg/natromacro
-[contributing-link]: https://github.com/NatroTeam/.github/blob/main/CONTRIBUTING.md
-[credits-link]: https://github.com/NatroTeam/.github/blob/main/CREDITS.md
-[bug-report-link]: https://github.com/NatroTeam/NatroMacro/issues/new?assignees=&labels=bug%2Cneeds+triage&projects=&template=bug.yml
-[suggestion-link]: https://github.com/NatroTeam/NatroMacro/issues/new?assignees=&labels=suggestion%2Cneeds+triage&projects=&template=suggestion.yml
-[github-profile-link]: http://github.com/NatroTeam
-[discord-banner-link]: https://invidget.switchblade.xyz/natromacro
-[natromacrodev-link]: https://github.com/NatroTeam/NatroMacroDev
+- Upstream repository: https://github.com/NatroTeam/NatroMacro
+- License: see `LICENSE.md` in this repository

@@ -296,6 +296,20 @@ nm_importConfig()
 	global
 	local config := Map() ; store default values, these are loaded initially
 
+	config["Addon"] := Map("FarmBloomCheck", 0
+		, "FarmBloomField", "Sunflower"
+		, "FarmBloomMins", 10
+		, "FarmBloomQuestMins", 10
+		, "FarmBloomSprinklerBloom", 0
+		, "FarmBloomSprinklerField", 0
+		, "FarmBloomReturnBy", "Walk"
+		, "RedPetalField", "Strawberry"
+		, "BluePetalField", "Blue Flower"
+		, "WhitePetalField", "Dandelion"
+		, "CyanPetalField", "Pineapple"
+		, "GreenPetalField", "Cactus"
+		, "PinkPetalField", "Strawberry")
+
 	config["Settings"] := Map("GuiTheme", "MacLion3"
 		, "AlwaysOnTop", 0
 		, "MoveSpeedNum", 28
@@ -339,7 +353,7 @@ nm_importConfig()
 		, "ShowOnPause", 0
 		, "IgnoreUpdateVersion", ""
 		, "FDCWarn", 1
-		, "priorityListNumeric", 12345678)
+		, "priorityListNumeric", 123456789)
 
 	config["Status"] := Map("StatusLogReverse", 0
 		, "TotalRuntime", 0
@@ -1215,7 +1229,18 @@ PolarBear := Map("Aromatic Pie",
 
 	, "Trail Mix",
 		[[1,"Collect","Sunflower"]
-		,[2,"Collect","Pineapple"]])
+		,[2,"Collect","Pineapple"]]
+
+	, "Mashed Blooms",
+		[[1,"Collect","Pumpkin"]
+		,[2,"Bloom","White"]
+		,[3,"Bloom","Cyan"]
+		,[4,"Kill","Spider"]]
+
+	, "Petal Tabbouleh",
+		[[1,"Bloom","Green"]
+		,[2,"Bloom","Pink"]
+		,[3,"Kill","RhinoBeetles"]])
 
 
 BlackBear := Map("Just White",
@@ -1356,7 +1381,12 @@ BuckoBee := Map("Abilities",
 		,[4,"Kill","RhinoBeetles"]
 		,[1,"Collect","Blue Flower"]
 		,[2,"Collect","Bamboo"]
-		,[3,"Collect","Pine Tree"]])
+		,[3,"Collect","Pine Tree"]]
+
+	, "Bucko Bee Petals",
+		[[1,"Bloom","Blue"]
+		,[2,"Bloom","Blue Clover"]
+		,[3,"Bloom","Blue Pineapple"]])
 
 
 RileyBee := Map("Abilities",
@@ -1426,7 +1456,12 @@ RileyBee := Map("Abilities",
 		,[4,"Kill","Ladybugs"]
 		,[1,"Collect","Mushroom"]
 		,[2,"Collect","Strawberry"]
-		,[3,"Collect","Rose"]])
+		,[3,"Collect","Rose"]]
+
+	, "Riley Bee Petals",
+		[[1,"Bloom","Red"]
+		,[2,"Bloom","Red Clover"]
+		,[3,"Bloom","Red Spider"]])
 
 ;field booster data
 FieldBooster:=Map("pine tree", {booster:"blue", stacks:1}
@@ -1960,7 +1995,7 @@ try Hotkey StopHotkey, stop, "On"
 pToken := Gdip_Startup()
 currentWalk := {pid:"", name:""} ; stores "pid" (script process ID) and "name" (pattern/movement name)
 
-priorityList:=[], defaultPriorityList:=["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "GoGather"]
+priorityList:=[], defaultPriorityList:=["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "FarmBloom", "GoGather"]
 for x in StrSplit(priorityListNumeric)
 	priorityList.push(defaultPriorityList[x])
 
@@ -1981,6 +2016,13 @@ PopStarActive:=0
 PreviousAction:="None"
 CurrentAction:="Startup"
 fieldnamelist := ["Bamboo","Blue Flower","Cactus","Clover","Coconut","Dandelion","Mountain Top","Mushroom","Pepper","Pine Tree","Pineapple","Pumpkin","Rose","Spider","Strawberry","Stump","Sunflower"]
+bloomFieldnamelist := ["Bamboo","Blue Flower","Cactus","Clover","Coconut","Dandelion","Pepper","Pine Tree","Pineapple","Pumpkin","Rose","Spider","Strawberry", "Sunflower"]
+redPetalFieldnamelist := ["Strawberry", "Rose", "Pepper", "Spider", "Cactus", "Clover"]
+bluePetalFieldnamelist := ["Blue Flower", "Bamboo", "Pine Tree", "Cactus", "Pineapple", "Clover"]
+whitePetalFieldnamelist := ["Dandelion", "Spider", "Coconut", "Blue Flower", "Strawberry", "Bamboo", "Sunflower", "Pineapple", "Clover"]
+cyanPetalFieldnamelist := ["Pineapple", "Pumpkin", "Blue Flower", "Bamboo", "Cactus", "Coconut"]
+greenPetalFieldnamelist := ["Cactus", "Pineapple", "Clover", "Pumpkin", "Pepper", "Strawberry", "Spider", "Pine Tree"]
+pinkPetalFieldnamelist := ["Strawberry", "Pepper", "Coconut", "Sunflower"]
 hotbarwhilelist := ["Never","Always","At Hive","Gathering","Attacking","Microconverter","Whirligig","Enzymes","GatherStart","Snowflake"]
 sprinklerImages := ["saturator"]
 ReconnectDelay:=0
@@ -2293,7 +2335,7 @@ for k,v in ["PMondoGuid","PMondoGuidComplete","PFieldBoosted","PFieldGuidExtend"
 #include "*i %A_ScriptDir%\..\settings\personal.ahk"
 
 ; add tabs
-TabArr := ["Gather","Collect/Kill","Boost","Quests","Planters","Status","Settings","Misc","Credits"], (BuffDetectReset = 1) && TabArr.Push("Advanced")
+TabArr := ["Gather","Collect/Kill","Boost","Quests","Planters","Addon","Status","Settings","Misc","Credits"], (BuffDetectReset = 1) && TabArr.Push("Advanced")
 (TabCtrl := MainGui.Add("Tab", "x0 y-1 w500 h240 -Wrap", TabArr)).OnEvent("Change", (*) => TabCtrl.Focus())
 SendMessage 0x1331, 0, 20, , TabCtrl ; set minimum tab width
 ; check for update
@@ -2301,6 +2343,62 @@ try AsyncHttpRequest("GET", "https://api.github.com/repos/NatroTeam/NatroMacro/r
 ; open Timers
 if (TimersOpen = 1)
 	run '"' exe_path32 '" /script "' A_WorkingDir '\submacros\PlanterTimers.ahk"'
+
+; ADDON TAB
+; ------------------------
+TabCtrl.UseTab("Addon")
+
+MainGui.SetFont("w700")
+MainGui.Add("GroupBox", "x5 y25 w130 h208", "Bloom")
+MainGui.SetFont("s8 cDefault Norm", "Tahoma")
+(GuiCtrl := MainGui.Add("CheckBox", "x75 y23 vFarmBloomCheck Checked" FarmBloomCheck, "Enable")).Section := "Addon", GuiCtrl.OnEvent("Click", nm_saveConfig)
+MainGui.Add("Text", "x10 y46 w70 +BackgroundTrans", "Field:")
+if !ObjHasValue(bloomFieldnamelist, FarmBloomField)
+	FarmBloomField := "Sunflower"
+(GuiCtrl := MainGui.Add("DropDownList", "x43 y40 w85 vFarmBloomField", bloomFieldnamelist)).Text := FarmBloomField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x10 y66 w110 +BackgroundTrans", "Mins:")
+(GuiCtrl := MainGui.Add("Edit", "x43 y61 w85 +BackgroundTrans vFarmBloomMins", ValidateInt(&FarmBloomMins, 10))).Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x10 y87 +BackgroundTrans", "To Hive By:")
+if (!IsSet(FarmBloomReturnBy) || (FarmBloomReturnBy = ""))
+	FarmBloomReturnBy := "Walk"
+MainGui.Add("Text", "x+18 yp w34 vFarmBloomReturnBy +Center +BackgroundTrans", FarmBloomReturnBy)
+MainGui.Add("Button", "xp-12 yp-1 w12 h16 vFBRBLeft", "<").OnEvent("Click", nm_FarmBloomReturnBy)
+MainGui.Add("Button", "xp+45 yp-1 w12 h16 vFBRBRight", ">").OnEvent("Click", nm_FarmBloomReturnBy)
+(GuiCtrl := MainGui.Add("CheckBox", "x10 y106 vFarmBloomSprinklerBloom Checked" FarmBloomSprinklerBloom, "Sprinkler on bloom")).Section := "Addon", GuiCtrl.OnEvent("Click", nm_saveConfig)
+(GuiCtrl := MainGui.Add("CheckBox", "x10 y122 vFarmBloomSprinklerField Checked" FarmBloomSprinklerField, "Sprinkler on field")).Section := "Addon", GuiCtrl.OnEvent("Click", nm_saveConfig)
+
+MainGui.SetFont("w700")
+MainGui.Add("GroupBox", "x140 y25 w158 h208", "Bloom Quest")
+MainGui.SetFont("s8 cDefault Norm", "Tahoma")
+MainGui.Add("Text", "x145 y46 w110 +BackgroundTrans", "Max Mins:")
+(GuiCtrl := MainGui.Add("Edit", "x206 y40 w85 +BackgroundTrans vFarmBloomQuestMins", ValidateInt(&FarmBloomQuestMins, 10))).Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y68 w70 +BackgroundTrans", "Red Petal:")
+if !ObjHasValue(redPetalFieldnamelist, RedPetalField)
+	FarmBloomField := "Strawberry"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y63 w85 vRedPetalField", redPetalFieldnamelist)).Text := RedPetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y91 w70 +BackgroundTrans", "Blue Petal:")
+if !ObjHasValue(bluePetalFieldnamelist, BluePetalField)
+	FarmBloomField := "Blue Flower"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y86 w85 vBluePetalField", bluePetalFieldnamelist)).Text := BluePetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y112 w70 +BackgroundTrans", "White Petal:")
+if !ObjHasValue(whitePetalFieldnamelist, WhitePetalField)
+	FarmBloomField := "Dandelion"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y109 w85 vWhitePetalField", whitePetalFieldnamelist)).Text := WhitePetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y135 w70 +BackgroundTrans", "Cyan Petal:")
+if !ObjHasValue(cyanPetalFieldnamelist, CyanPetalField)
+	FarmBloomField := "Pineapple"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y132 w85 vCyanPetalField", cyanPetalFieldnamelist)).Text := CyanPetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y158 w70 +BackgroundTrans", "Green Petal:")
+if !ObjHasValue(greenPetalFieldnamelist, GreenPetalField)
+	FarmBloomField := "Cactus"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y155 w85 vGreenPetalField", greenPetalFieldnamelist)).Text := GreenPetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+MainGui.Add("Text", "x145 y181 w70 +BackgroundTrans", "Pink Petal:")
+if !ObjHasValue(pinkPetalFieldnamelist, PinkPetalField)
+	FarmBloomField := "Strawberry"
+(GuiCtrl := MainGui.Add("DropDownList", "x206 y178 w85 vPinkPetalField", pinkPetalFieldnamelist)).Text := PinkPetalField, GuiCtrl.Section := "Addon", GuiCtrl.OnEvent("Change", nm_saveConfig)
+
+SetLoadingProgress(29)
+
 
 ; GATHER TAB
 ; ------------------------
@@ -4051,6 +4149,16 @@ nm_TabMiscUnLock(){
 ;update config
 nm_saveConfig(GuiCtrl, *){
 	global
+	if (GuiCtrl.Name = "FarmBloomSprinklerBloom" && GuiCtrl.Value = 1) {
+		try MainGui["FarmBloomSprinklerField"].Value := 0
+		FarmBloomSprinklerField := 0
+		IniWrite FarmBloomSprinklerField, "settings\nm_config.ini", "Addon", "FarmBloomSprinklerField"
+	}
+	else if (GuiCtrl.Name = "FarmBloomSprinklerField" && GuiCtrl.Value = 1) {
+		try MainGui["FarmBloomSprinklerBloom"].Value := 0
+		FarmBloomSprinklerBloom := 0
+		IniWrite FarmBloomSprinklerBloom, "settings\nm_config.ini", "Addon", "FarmBloomSprinklerBloom"
+	}
 	switch GuiCtrl.Type, 0 {
 		case "DDL":
 		%GuiCtrl.Name% := GuiCtrl.Text
@@ -5876,6 +5984,16 @@ nm_QuestGatherReturnBy(GuiCtrl, *){
 
 	MainGui["QuestGatherReturnBy"].Text := QuestGatherReturnBy := val[(GuiCtrl.Name = "QGRBRight") ? (Mod(i, l) + 1) : (Mod(l + i - 2, l) + 1)]
 	IniWrite QuestGatherReturnBy, "settings\nm_config.ini", "Quests", "QuestGatherReturnBy"
+}
+
+nm_FarmBloomReturnBy(GuiCtrl, *){
+	global FarmBloomReturnBy
+	static val := ["Walk", "Reset"], l := val.Length
+
+	i := (FarmBloomReturnBy = "Walk") ? 1 : 2
+
+	MainGui["FarmBloomReturnBy"].Text := FarmBloomReturnBy := val[(GuiCtrl.Name = "FBRBRight") ? (Mod(i, l) + 1) : (Mod(l + i - 2, l) + 1)]
+	IniWrite FarmBloomReturnBy, "settings\nm_config.ini", "Addon", "FarmBloomReturnBy"
 }
 
 ; PLANTERS TAB
@@ -9524,7 +9642,7 @@ nm_priorityListGui(*) {
 	#Include "%A_ScriptDir%\nm_image_assets\webhook_gui\bitmaps.ahk"
 
 	;;config
-	defaultList := ["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "GoGather"]
+	defaultList := ["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "FarmBloom", "GoGather"]
 	priorityList := []
 	for i in StrSplit(' priorityListNumeric ')
 		priorityList.push(defaultList[i])
@@ -9638,8 +9756,8 @@ nm_priorityListGui(*) {
 			case "close":
 				ExitApp()
 			case "Reset":
-				priorityList := ["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "GoGather"]
-				updateInt("priorityListNumeric", 12345678)
+				priorityList := ["Night", "Mondo", "Planter", "Bugrun", "Collect", "QuestRotate", "Boost", "FarmBloom", "GoGather"]
+				updateInt("priorityListNumeric", 123456789)
 				nm_priorityGui()
 			case "ToolTip":
 				Msgbox("Priority List``r``n``r``nDrag and drop to reorder the priority list.``r``nPress Reset to reset the priority list back to default.``n``nNote:``n - The priority list will not override interrupts, e.g., for bug kills or vicious bee.``n - In one loop each task will be completed.``n - The DEFAULT priority is usually optimal for most players.","Priority List",0x40040)
@@ -10200,16 +10318,28 @@ nm_KillTimeEstimation(bossName, bossTimer)
 		}
 	}
 }
-nm_imgSearch(fileName,v,aim := "full", trans:="none"){
+nm_imgSearch(fileName, v, arg3 := "full", arg4 := 0, arg5 := 0, arg6 := 0, trans := "none") {
 	GetRobloxClientPos()
+	
 	;xi := 0
 	;yi := 0
 	;ww := windowWidth
 	;wh := windowHeight
-	xi:=(aim="actionbar") ? windowWidth//4 : (aim="highright") ? windowWidth//2 : (aim="right") ? windowWidth//2 : (aim="center") ? windowWidth//4 : (aim="lowright") ? windowWidth//2 : 0
-	yi:=(aim="low") ? windowHeight//2 : (aim="actionbar") ? (windowHeight//4)*3 : (aim="center") ? windowHeight//4 : (aim="lowright") ? windowHeight//2 : (aim="quest") ? 150 : 0
-	ww:=(aim="actionbar") ? xi*3 : (aim="highleft") ? windowWidth//2 : (aim="left") ? windowWidth//2 : (aim="center") ? xi*3 : (aim="quest" || aim="questbrown") ? 310 : windowWidth
-	wh:=(aim="high") ? windowHeight//2 : (aim="highright") ? windowHeight//2 : (aim="highleft") ? windowHeight//2 : (aim="buff") ? 150 : (aim="abovebuff") ? 30 : (aim="center") ? yi*3 : (aim="quest") ? Max(560, windowHeight-100) : (aim="questbrown") ? windowHeight//2 : windowHeight
+	if (Type(arg3) = "String")
+	{
+		aim := arg3
+		xi:=(aim="actionbar") ? windowWidth//4 : (aim="highright") ? windowWidth//2 : (aim="right") ? windowWidth//2 : (aim="center") ? windowWidth//4 : (aim="lowright") ? windowWidth//2 : 0
+		yi:=(aim="low") ? windowHeight//2 : (aim="actionbar") ? (windowHeight//4)*3 : (aim="center") ? windowHeight//4 : (aim="lowright") ? windowHeight//2 : (aim="quest") ? 150 : 0
+		ww:=(aim="actionbar") ? xi*3 : (aim="highleft") ? windowWidth//2 : (aim="left") ? windowWidth//2 : (aim="center") ? xi*3 : (aim="quest" || aim="questbrown") ? 310 : windowWidth
+		wh:=(aim="high") ? windowHeight//2 : (aim="highright") ? windowHeight//2 : (aim="highleft") ? windowHeight//2 : (aim="buff") ? 150 : (aim="abovebuff") ? 30 : (aim="center") ? yi*3 : (aim="quest") ? Max(560, windowHeight-100) : (aim="questbrown") ? windowHeight//2 : windowHeight
+	}
+	else
+	{
+		xi := arg3
+        ww := arg3 + arg4
+        yi := arg5
+        wh := arg5 + arg6
+	}
 	if DirExist(A_WorkingDir "\nm_image_assets")
 	{
 		try result := ImageSearch(&FoundX, &FoundY, windowX + xi, windowY + yi, windowX + ww, windowY + wh, "*" v ((trans != "none") ? (" *Trans" trans) : "") " " A_WorkingDir "\nm_image_assets\" fileName)
@@ -18184,8 +18314,12 @@ nm_PolarQuestProg(){
 	global PolarQuest
 	global PolarStart
 	global PolarQuestProgress
+	global RedPetalField, BluePetalField, WhitePetalField, CyanPetalField, GreenPetalField, PinkPetalField
 	global QuestGatherField:="None"
 	global QuestGatherFieldSlot:=0
+	global QuestBloomField:="None"
+	global QuestBloomColor:=""
+	global QuestBloomSlot:=0
 	global PolarQuestComplete:=1
 	global QuestLadybugs
 	global QuestRhinoBeetles
@@ -18329,6 +18463,9 @@ nm_PolarQuestProg(){
 		;also set next steps
 		QuestGatherField:="None"
 		QuestGatherFieldSlot:=0
+		QuestBloomField:="None"
+		QuestBloomColor:=""
+		QuestBloomSlot:=0
 		newLine:="|"
 		polarProgress:=""
 		num:=PolarBear[PolarQuest].Length
@@ -18345,6 +18482,20 @@ nm_PolarQuestProg(){
 				else if (action="collect" && QuestGatherField="none") {
 					QuestGatherField:=where
 					QuestGatherFieldSlot:=PolarBear[PolarQuest][A_Index][1]
+				}
+				else if (action="bloom" && QuestBloomField="none") {
+					colorLower := StrLower(where)
+					switch colorLower {
+						case "red":   QuestBloomField := RedPetalField
+						case "blue":  QuestBloomField := BluePetalField
+						case "white": QuestBloomField := WhitePetalField
+						case "cyan":  QuestBloomField := CyanPetalField
+						case "pink":  QuestBloomField := PinkPetalField
+						case "green": QuestBloomField := GreenPetalField
+						default:       QuestBloomField := "None"
+					}
+					QuestBloomColor := where
+					QuestBloomSlot := PolarBear[PolarQuest][A_Index][1]
 				}
 			}
 			;border color, white (titlebar), black (text)
@@ -18363,18 +18514,50 @@ nm_PolarQuestProg(){
 		}
 		IniWrite polarProgress, "settings\nm_config.ini", "Quests", "PolarQuestProgress"
 		MainGui["PolarQuestProgress"].Text := StrReplace(polarProgress, "|", "`n")
-		if(QuestLadybugs=0 && QuestRhinoBeetles=0 && QuestSpider=0 && QuestMantis=0 && QuestScorpions=0 && QuestWerewolf=0 && QuestGatherField="None"){
+				if(QuestLadybugs=0 && QuestRhinoBeetles=0 && QuestSpider=0 && QuestMantis=0 && QuestScorpions=0 && QuestWerewolf=0 && QuestGatherField="None" && QuestBloomField="None"){
 			PolarQuestComplete:=1
 		}
 	}
 }
 nm_PolarQuest(){
-	global PolarQuestCheck, PolarQuest, PolarQuestComplete, QuestGatherField, QuestLadybugs, QuestRhinoBeetles, QuestSpider, QuestMantis, QuestScorpions, QuestWerewolf, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, RotateQuest, TotalQuestsComplete, SessionQuestsComplete, VBState
+	global PolarQuestCheck, PolarQuest, PolarQuestComplete, QuestGatherField, QuestLadybugs, QuestRhinoBeetles, QuestSpider, QuestMantis, QuestScorpions, QuestWerewolf, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, RotateQuest, TotalQuestsComplete, SessionQuestsComplete, VBState, QuestBloomField, QuestBloomColor, QuestBloomSlot, PolarStart
+	global FarmBloomQuestMins, FarmBloomMins
 	if(!PolarQuestCheck)
 		return
 	nm_setShiftLock(0)
 	RotateQuest:="Polar"
 	nm_PolarQuestProg()
+	; Bloom petal quest step handling
+	if (QuestBloomField && QuestBloomField != "None" && PolarQuestComplete != 1) {
+		oldFarmBloomMins := FarmBloomMins
+		bloomQuestEndTick := A_TickCount + (FarmBloomQuestMins * 60 * 1000)
+		Loop {
+			if (VBState=1)
+				return
+			if (!PolarQuestCheck)
+				return
+			if (A_TickCount >= bloomQuestEndTick) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+
+			nm_PolarQuestProg()
+			if (PolarQuestComplete = 1)
+				break
+			if (!QuestBloomField || QuestBloomField = "None")
+				break
+			
+			nm_setStatus("Quest", "Polar Bloom: " . QuestBloomColor . " -> " . QuestBloomField)
+			remainingMins := (bloomQuestEndTick - A_TickCount) / 60000
+			if (remainingMins <= 0) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+			FarmBloomMins := (remainingMins < 0.5) ? remainingMins : 0.5
+			nm_FarmBloom(true, QuestBloomField, PolarStart[3], QuestBloomSlot, remainingMins * 60)
+		}
+		FarmBloomMins := oldFarmBloomMins
+	}
 	if(PolarQuestComplete = 1) {
 		nm_updateAction("Quest")
 		nm_gotoQuestgiver("Polar")
@@ -18411,10 +18594,406 @@ nm_PolarQuest(){
 		}
 	}
 }
+
+nm_isQuestSlotIncomplete(startY, slot) {
+	global QuestBarInset, QuestBarSize, QuestBarGapSize
+	hwnd := GetRobloxHWND()
+	if (!hwnd)
+		return false
+	offsetY := GetYOffset(hwnd)
+	GetRobloxClientPos(hwnd)
+
+	questbarColor := PixelGetColor(windowX+QuestBarInset+10, windowY+QuestBarSize*(slot-1)+startY+QuestBarGapSize+5)
+	return (questbarColor=0xF46C55) || (questbarColor=0x6EFF60)
+}
+
+nm_FarmBloom(force := false, overrideField := "", questStartY := 0, questSlot := 0, maxDurationSeconds := 0){
+	global FarmBloomCheck, FarmBloomField, FarmBloomMins, FarmBloomSprinkler
+	global FarmBloomReturnBy
+	global QuestGatherReturnBy
+	global FarmBloomSprinklerBloom, FarmBloomSprinklerField
+	global VBState, youDied, SprinklerType, SC_1
+	global RotRight, RotLeft, RotUp, RotDown, ZoomOut
+	global BackpackPercentFiltered
+	local bloomField := overrideField ? overrideField : FarmBloomField
+	hwnd := GetRobloxHWND()
+	if (hwnd)
+		GetRobloxClientPos(hwnd)
+
+	FieldAlign := Map()
+	FieldAlign["bamboo"]     := [[39, 18, 11, 12], ['RightKey', 'FwdKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["blueflower"] := [[17, 49, 19, 11], ['FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["cactus"]     := [[23, 33, 26, 16, 3], ['BackKey', 'LeftKey', 'FwdKey', 'RightKey', 'FwdKey']]
+	FieldAlign["clover"]     := [[29, 18, 2, 20, 23, 5], ['RightKey', 'FwdKey', 'RightKey', 'RightKey, BackKey', 'LeftKey', 'BackKey']]
+	FieldAlign["coconut"]    := [[21, 30, 16], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["dandelion"]  := [[10, 40, 25, 12, 14], ['BackKey', 'LeftKey', "FwdKey", 'RightKey, BackKey', 'RightKey']]
+	FieldAlign["pepper"]     := [[24, 32, 20], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["pinetree"]   := [[23, 31, 18], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["pineapple"]  := [[23, 33, 4, 18], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey', '']]
+	FieldAlign["pumpkin"]    := [[3, 15, 33, 10, 12], ['FwdKey, RightKey', 'FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["rose"]       := [[3, 31, 20, 10], ['LeftKey, BackKey', 'LeftKey', 'BackKey', 'RightKey, FwdKey']]
+	FieldAlign["spider"]     := [[26, 28, 19], ['FwdKey', 'LeftKey', 'RightKey, BackKey']]
+	FieldAlign["strawberry"] := [[22, 26, 15, 3], ['FwdKey', 'LeftKey', 'RightKey, BackKey', 'BackKey']]
+	FieldAlign["sunflower"]  := [[20, 33, 7, 16], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey']]
+
+	if (!FarmBloomCheck && !force)
+		return
+	
+	;interrupts
+	if ((VBState=1) || nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
+		return
+	
+	;convert field name from GUI format to function format
+	;GUI uses: "Sunflower", "Blue Flower", "Pine Tree", etc.
+	;Function expects: "sunflower", "blueflower", "pinetree", etc.
+	fieldNameLower := StrLower(bloomField)
+	fieldNameForFunction := StrReplace(fieldNameLower, " ", "")
+	fieldYawDir := ""
+	fieldYawSteps := 0
+	
+	nm_updateAction("FarmBloom")
+	nm_setStatus("Starting", "Bloom Farming: " . bloomField)
+	
+	;reset to start from hive
+	nm_Reset()
+	if (VBState=1)
+		return
+	
+	;go to field first
+	nm_gotoField(bloomField)
+	if (VBState=1)
+		return
+	
+	;apply camera rotation for fields
+	if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+		sendinput "{" RotLeft " 2}"
+		fieldYawDir := "Left"
+		fieldYawSteps := 2
+	}
+	else if (fieldNameForFunction == "dandelion" || fieldNameForFunction == "strawberry") {
+		sendinput "{" RotRight " 2}"
+		fieldYawDir := "Right"
+		fieldYawSteps := 2
+	}
+	sendinput "{" RotUp " 10}"
+	if (FarmBloomSprinklerField) {
+		if (SprinklerType="Supreme" || SprinklerType="Basic")
+			Send "{" SC_1 "}"
+		else
+			nm_JumpSprinkler()
+	}
+
+	if (questStartY && questSlot) {
+    	nm_OpenMenu("questlog")
+	}
+
+	CoordMode "Pixel", "Screen"
+	CoordMode "Mouse", "Screen"
+
+	bloomCtx := Map()
+	bloomCtx["screenCenterX"] := windowWidth / 2
+	bloomCtx["screenCenterY"] := windowHeight / 2
+	bloomCtx["threshold"] := Round(windowHeight * 0.029452108)
+	bloomCtx["searchWindow"] := Round(windowHeight * 0.044178163)
+	bloomCtx["offsetX"] := Round(windowWidth * 0.002)
+	bloomCtx["offsetY"] := Round(windowHeight * 0.0736303)
+	bloomCtx["movement"] :=
+		(
+		' nm_Walk(2.5, RightKey) '
+		' nm_Walk(0.833, BackKey) '
+		' nm_Walk(2.357, BackKey, LeftKey) '
+		' nm_Walk(1.667, LeftKey) '
+		' nm_Walk(2.357, LeftKey, FwdKey) '
+		' nm_Walk(1.667, FwdKey) '
+		' nm_Walk(2.357, FwdKey, RightKey) '
+		' nm_Walk(1.667, RightKey) '
+		' nm_Walk(2.357, RightKey, BackKey) '
+		)
+
+	limitLeft := 0
+	limitRight := windowWidth
+	limitTop := 0
+	limitBottom := windowHeight
+	switch fieldNameForFunction{
+		case "clover":
+			limitLeft := Round(windowWidth * 0.39)
+		case "spider":
+			limitLeft := Round(windowWidth * 0.1836)
+			limitRight := windowWidth - limitLeft
+		case "strawberry":
+			limitRight := Round(windowWidth * 0.78125)
+		case "sunflower":
+			limitBottom := Round(windowHeight * 0.876512418)
+		case "pumpkin":
+			limitBottom := Round(windowHeight * 0.876512418)
+			limitLeft := Round(windowWidth * 0.18)
+		case "bamboo":
+			limitLeft := Round(windowWidth * 0.1074)
+		case "cactus":
+			limitBottom := Round(windowHeight * 0.876512418)
+			limitTop := Round(windowHeight * 0.36523)
+		case "rose":
+			limitLeft := Round(windowWidth * 0.3418)
+	}
+	bloomCtx["limitLeft"] := limitLeft
+	bloomCtx["limitRight"] := limitRight
+	bloomCtx["limitTop"] := limitTop
+	bloomCtx["limitBottom"] := limitBottom
+	
+	;calculate end time
+	if (maxDurationSeconds && maxDurationSeconds > 0)
+		durationSeconds := maxDurationSeconds
+	else
+		durationSeconds := (questStartY && questSlot) ? 999999 : (FarmBloomMins * 60)
+	endTick := A_TickCount + (durationSeconds * 1000)
+	falseStartTick := 0
+	didNoBloomAlign := false
+	lastBagCheck := 0
+	deathRecoveries := 0
+
+	screenCenterX := windowWidth / 2
+	screenCenterY := windowHeight / 2
+	lastQuestPoll := 0
+
+	phaseCounter := 1
+	isAligning := false
+	alignInterrupt := true
+	
+	;run bloom farming for specified duration
+	while (A_TickCount < endTick) {
+
+		if (!FarmBloomCheck && !force)
+			break
+
+		; periodic bag check + convert
+		if (!lastBagCheck || (A_TickCount - lastBagCheck) >= 1000) {
+			lastBagCheck := A_TickCount
+			if (BackpackPercentFiltered >= 95) {
+				pauseStartTick := A_TickCount
+				nm_setStatus("Converting", "Backpack")
+				if (FarmBloomReturnBy = "Reset")
+					nm_Reset()
+				else {
+					if (fieldYawDir == "Left")
+						sendinput "{" RotRight " " fieldYawSteps "}"
+					else if (fieldYawDir == "Right")
+						sendinput "{" RotLeft " " fieldYawSteps "}"
+					sendinput "{" RotDown " 4}"
+					nm_walkFrom(bloomField)
+				}
+				nm_findHiveSlot()
+				nm_convert()
+				if (VBState=1)
+					break
+				if (youDied) {
+					deathRecoveries += 1
+					if (deathRecoveries > 10)
+						break
+					nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
+					nm_Reset()
+					if (VBState=1)
+						break
+					nm_gotoField(bloomField)
+					if (VBState=1)
+						break
+					if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+						sendinput "{" RotLeft " 2}"
+						fieldYawDir := "Left"
+						fieldYawSteps := 2
+					}
+					else if (fieldNameForFunction == "strawberry") {
+						sendinput "{" RotLeft " 4}"
+						fieldYawDir := "Left"
+						fieldYawSteps := 4
+					}
+					else if (fieldNameForFunction == "dandelion") {
+						sendinput "{" RotRight " 2}"
+						fieldYawDir := "Right"
+						fieldYawSteps := 2
+					}
+					sendinput "{" RotUp " 10}"
+					if (FarmBloomSprinklerField) {
+						if (SprinklerType="Supreme" || SprinklerType="Basic")
+							Send "{" SC_1 "}"
+						else
+							nm_JumpSprinkler()
+					}
+					if (questStartY && questSlot)
+						nm_OpenMenu("questlog")
+					endTick += (A_TickCount - pauseStartTick)
+					falseStartTick := 0
+					didNoBloomAlign := false
+					phaseCounter := 1
+					isAligning := false
+					alignInterrupt := true
+					continue
+				}
+				nm_setStatus("Traveling", "Bloom Farming: " . bloomField)
+				nm_gotoField(bloomField)
+				sendinput "{" RotUp " 10}"
+				if (FarmBloomSprinklerField) {
+					if (SprinklerType="Supreme" || SprinklerType="Basic")
+						Send "{" SC_1 "}"
+					else
+						nm_JumpSprinkler()
+				}
+				endTick += (A_TickCount - pauseStartTick)
+				falseStartTick := 0
+				didNoBloomAlign := false
+				continue
+			}
+		}
+		;check interrupts
+		if (VBState=1)
+			break
+		if (youDied) {
+			pauseStartTick := A_TickCount
+			deathRecoveries += 1
+			if (deathRecoveries > 10)
+				break
+			nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
+			nm_Reset()
+			if (VBState=1)
+				break
+			nm_gotoField(bloomField)
+			if (VBState=1)
+				break
+			if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+				sendinput "{" RotLeft " 2}"
+				fieldYawDir := "Left"
+				fieldYawSteps := 2
+			}
+			else if (fieldNameForFunction == "strawberry") {
+				sendinput "{" RotLeft " 4}"
+				fieldYawDir := "Left"
+				fieldYawSteps := 4
+			}
+			else if (fieldNameForFunction == "dandelion") {
+				sendinput "{" RotRight " 2}"
+				fieldYawDir := "Right"
+				fieldYawSteps := 2
+			}
+			sendinput "{" RotUp " 10}"
+			if (FarmBloomSprinklerField) {
+				if (SprinklerType="Supreme" || SprinklerType="Basic")
+					Send "{" SC_1 "}"
+				else
+					nm_JumpSprinkler()
+			}
+			if (questStartY && questSlot)
+				nm_OpenMenu("questlog")
+			endTick += (A_TickCount - pauseStartTick)
+			falseStartTick := 0
+			didNoBloomAlign := false
+			phaseCounter := 1
+			isAligning := false
+			alignInterrupt := true
+			continue
+		}
+		if (nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
+			break
+		; quest progress polling (every 1s or 2s is fine)
+		if (questStartY && questSlot && (!lastQuestPoll || (A_TickCount - lastQuestPoll) >= 1000)) {
+			lastQuestPoll := A_TickCount
+			if (!nm_isQuestSlotIncomplete(questStartY, questSlot)) {
+				break
+			}
+		}
+		
+		if (!isAligning || alignInterrupt){
+			foundBloom := nma_farmBloom(fieldNameForFunction, FarmBloomSprinklerBloom, bloomCtx)
+			if (foundBloom) {
+				falseStartTick := 0
+				isAligning := false
+				didNoBloomAlign := false
+				bloomCtx["limitLeft"] := limitLeft
+				bloomCtx["limitRight"] := limitRight
+				bloomCtx["limitTop"] := limitTop
+				bloomCtx["limitBottom"] := limitBottom
+				Sleep 200
+				continue
+			}
+		}
+		
+		if (isAligning){
+			if ((fieldNameForFunction == "dandelion" && phaseCounter < 3) || (fieldNameForFunction == "cactus" && phaseCounter < 3)){
+				alignInterrupt := false
+			}
+			else{
+				alignInterrupt := true
+			}
+
+			if ((fieldNameForFunction == "clover" && phaseCounter < 5) || fieldNameForFunction == "sunflower" || fieldNameForFunction == "bamboo" || (fieldNameForFunction == "strawberry" && phaseCounter > 1) || (fieldNameForFunction == "pumpkin" && phaseCounter > 1) || (fieldNameForFunction == "cactus" && phaseCounter > 2)){
+				bloomCtx["limitLeft"] := 0
+				bloomCtx["limitRight"] := windowWidth
+				bloomCtx["limitTop"] := 0
+				bloomCtx["limitBottom"] := windowHeight
+			}
+			else{
+				bloomCtx["limitLeft"] := limitLeft
+				bloomCtx["limitRight"] := limitRight
+				bloomCtx["limitTop"] := limitTop
+				bloomCtx["limitBottom"] := limitBottom
+			}
+
+			value := FieldAlign[fieldNameForFunction][1][phaseCounter]
+			if (value != "" && value != -1){
+				nm_createWalk(' nm_Walk( ' FieldAlign[fieldNameForFunction][1][phaseCounter] ', ' FieldAlign[fieldNameForFunction][2][phaseCounter] ') ')
+				KeyWait "F14", "D T5 L"
+				KeyWait "F14", "T60 L"
+				nm_endWalk()
+				phaseCounter++
+			}
+			else{
+				isAligning := false
+				phaseCounter := 1
+				falseStartTick := 0
+			}
+		}
+
+		if (!falseStartTick)
+			falseStartTick := A_TickCount
+		
+		if (!didNoBloomAlign && (A_TickCount - falseStartTick) >= 6000) {
+			didNoBloomAlign := true
+			isAligning := true
+			falseStartTick := 0
+		}
+		
+		if (!isAligning){
+			if (phaseCounter != 1)
+				phaseCounter := 1
+			Sleep 100
+		}
+			
+	}
+	
+	nm_setStatus("Completed", "Bloom Farming: " . bloomField)
+	returnBy := (questStartY && questSlot) ? QuestGatherReturnBy : FarmBloomReturnBy
+	if (returnBy = "Reset")
+		nm_Reset()
+	else {
+		if (fieldYawDir == "Left")
+			sendinput "{" RotRight " " fieldYawSteps "}"
+		else if (fieldYawDir == "Right")
+			sendinput "{" RotLeft " " fieldYawSteps "}"
+		sendinput "{" RotDown " 4}"
+		nm_walkFrom(bloomField)
+	}
+	if (VBState=1)
+		return
+	nm_findHiveSlot()
+	nm_convert()
+}
+
 nm_RileyQuestProg(){
 	global RileyQuestCheck, RileyBee, RileyQuest, RileyStart, HiveBees, FieldName1, LastAntPass, LastRedBoost, RileyLadybugs, RileyScorpions, RileyAll
+	global RedPetalField, BluePetalField
 	global QuestGatherField:="None"
 	global QuestGatherFieldSlot:=0
+	global QuestBloomField:="None"
+	global QuestBloomColor:=""
+	global QuestBloomSlot:=0
 	global RileyQuestComplete:=1
 	global RileyQuestProgress
 	global QuestAnt:=0
@@ -18550,6 +19129,9 @@ nm_RileyQuestProg(){
 		;also set next steps
 		QuestGatherField:="None"
 		QuestGatherFieldSlot:=0
+		QuestBloomField:="None"
+		QuestBloomColor:=""
+		QuestBloomSlot:=0
 		QuestRedAnyField:=0
 		RileyLadybugs:=0
 		RileyScorpions:=0
@@ -18603,6 +19185,21 @@ nm_RileyQuestProg(){
 					QuestGatherField:=where
 					QuestGatherFieldSlot:=RileyBee[RileyQuest][A_Index][1]
 				}
+				else if (action="bloom" && QuestBloomField="none") {
+					parts := StrSplit(where, A_Space)
+					bloomColor := parts[1]
+					bloomField := (parts.Length >= 2) ? (parts[2] = "Clover" ? "Clover" : (parts[2] = "Spider" ? "Spider" : (parts[2] = "Pineapple" ? "Pineapple" : parts[2]))) : ""
+					if (!bloomField) {
+						switch StrLower(bloomColor) {
+							case "red":  bloomField := RedPetalField
+							case "blue": bloomField := BluePetalField
+							default:      bloomField := "None"
+						}
+					}
+					QuestBloomField := bloomField
+					QuestBloomColor := bloomColor
+					QuestBloomSlot := RileyBee[RileyQuest][A_Index][1]
+				}
 				else if(action="get"){ ;Ant, RedBoost
 					if(where="ant") {
 						QuestAnt:=1
@@ -18628,7 +19225,7 @@ nm_RileyQuestProg(){
 		}
 		IniWrite rileyProgress, "settings\nm_config.ini", "Quests", "RileyQuestProgress"
 		MainGui["RileyQuestProgress"].Text := StrReplace(rileyProgress, "|", "`n")
-		if(RileyLadybugs=0 && RileyScorpions=0 && RileyAll=0 && QuestGatherField="None" && QuestAnt=0 && QuestRedBoost=0 && QuestFeed="None" && QuestRedAnyField=0){
+		if(RileyLadybugs=0 && RileyScorpions=0 && RileyAll=0 && QuestGatherField="None" && QuestBloomField="None" && QuestAnt=0 && QuestRedBoost=0 && QuestFeed="None" && QuestRedAnyField=0){
 			RileyQuestComplete:=1
 		} else { ;check if all doable things are done and everything else is on cooldown
 			if(QuestGatherField!="None" || (QuestAnt && (nowUnix()-LastAntPass)<7200) || (RileyLadybugs && (nowUnix()-LastBugrunLadybugs)<floor(330*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01))) || (RileyScorpions && (nowUnix()-LastBugrunScorpions)<floor(1230*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01)))) { ;there is at least one thing no longer on cooldown
@@ -18640,11 +19237,43 @@ nm_RileyQuestProg(){
 	}
 }
 nm_RileyQuest(){
-	global RileyQuestCheck, RileyQuestComplete, RileyQuest, RotateQuest, QuestGatherField, QuestAnt, QuestRedBoost, QuestFeed, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, RileyLadybugs, RileyScorpions, TotalQuestsComplete, SessionQuestsComplete, VBState
+	global RileyQuestCheck, RileyQuestComplete, RileyQuest, RotateQuest, QuestGatherField, QuestAnt, QuestRedBoost, QuestFeed, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, RileyLadybugs, RileyScorpions, TotalQuestsComplete, SessionQuestsComplete, VBState, QuestBloomField, QuestBloomColor, QuestBloomSlot, RileyStart
+	global FarmBloomQuestMins, FarmBloomMins
 	if(!RileyQuestCheck)
 		return
 	RotateQuest:="Riley"
 	nm_RileyQuestProg()
+	; Bloom petal quest step handling
+	if (QuestBloomField && QuestBloomField != "None" && RileyQuestComplete != 1) {
+		oldFarmBloomMins := FarmBloomMins
+		bloomQuestEndTick := A_TickCount + (FarmBloomQuestMins * 60 * 1000)
+		Loop {
+			if (VBState=1)
+				return
+			if (!RileyQuestCheck)
+				return
+			if (A_TickCount >= bloomQuestEndTick) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+
+			nm_RileyQuestProg()
+			if (RileyQuestComplete = 1)
+				break
+			if (!QuestBloomField || QuestBloomField = "None")
+				break
+			
+			nm_setStatus("Quest", "Riley Bloom: " . QuestBloomColor . " -> " . QuestBloomField)
+			remainingMins := (bloomQuestEndTick - A_TickCount) / 60000
+			if (remainingMins <= 0) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+			FarmBloomMins := (remainingMins < 0.5) ? remainingMins : 0.5
+			nm_FarmBloom(true, QuestBloomField, RileyStart[3], QuestBloomSlot, remainingMins * 60)
+		}
+		FarmBloomMins := oldFarmBloomMins
+	}
 	if(RileyQuestComplete=1) {
 		nm_updateAction("Quest")
 		nm_gotoQuestgiver("Riley")
@@ -18689,8 +19318,12 @@ nm_RileyQuest(){
 }
 nm_BuckoQuestProg(){
 	global BuckoQuestCheck, BuckoBee, BuckoQuest, BuckoStart, HiveBees, FieldName1, LastAntPass, LastBlueBoost, BuckoRhinoBeetles, BuckoMantis
+	global RedPetalField, BluePetalField
 	global QuestGatherField:="None"
 	global QuestGatherFieldSlot:=0
+	global QuestBloomField:="None"
+	global QuestBloomColor:=""
+	global QuestBloomSlot:=0
 	global BuckoQuestComplete:=1
 	global BuckoQuestProgress
 	global QuestAnt:=0
@@ -18879,6 +19512,21 @@ nm_BuckoQuestProg(){
 					QuestGatherField:=where
 					QuestGatherFieldSlot:=BuckoBee[BuckoQuest][A_Index][1]
 				}
+				else if (action="bloom" && QuestBloomField="none") {
+					parts := StrSplit(where, A_Space)
+					bloomColor := parts[1]
+					bloomField := (parts.Length >= 2) ? (parts[2] = "Clover" ? "Clover" : (parts[2] = "Spider" ? "Spider" : (parts[2] = "Pineapple" ? "Pineapple" : parts[2]))) : ""
+					if (!bloomField) {
+						switch StrLower(bloomColor) {
+							case "red":  bloomField := RedPetalField
+							case "blue": bloomField := BluePetalField
+							default:      bloomField := "None"
+						}
+					}
+					QuestBloomField := bloomField
+					QuestBloomColor := bloomColor
+					QuestBloomSlot := BuckoBee[BuckoQuest][A_Index][1]
+				}
 				else if(action="get"){ ;Ant, BlueBoost
 					if(where="ant") {
 						QuestAnt:=1
@@ -18915,12 +19563,45 @@ nm_BuckoQuestProg(){
 			}
 	}
 }
+
 nm_BuckoQuest(){
-	global BuckoQuestCheck, BuckoQuestComplete, BuckoQuest, RotateQuest, QuestGatherField, QuestAnt, QuestBlueBoost, QuestFeed, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, BuckoRhinoBeetles, BuckoMantis, TotalQuestsComplete, SessionQuestsComplete, VBState
+	global BuckoQuestCheck, BuckoQuestComplete, BuckoQuest, RotateQuest, QuestGatherField, QuestAnt, QuestBlueBoost, QuestFeed, LastBugrunLadybugs, LastBugrunRhinoBeetles, LastBugrunSpider, LastBugrunMantis, LastBugrunScorpions, LastBugrunWerewolf, MonsterRespawnTime, BuckoRhinoBeetles, BuckoMantis, TotalQuestsComplete, SessionQuestsComplete, VBState, QuestBloomField, QuestBloomColor, QuestBloomSlot, BuckoStart
+	global FarmBloomQuestMins, FarmBloomMins
 	if(!BuckoQuestCheck)
 		return
 	RotateQuest:="Bucko"
 	nm_BuckoQuestProg()
+	; Bloom petal quest step handling
+	if (QuestBloomField && QuestBloomField != "None" && BuckoQuestComplete != 1) {
+		oldFarmBloomMins := FarmBloomMins
+		bloomQuestEndTick := A_TickCount + (FarmBloomQuestMins * 60 * 1000)
+		Loop {
+			if (VBState=1)
+				return
+			if (!BuckoQuestCheck)
+				return
+			if (A_TickCount >= bloomQuestEndTick) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+
+			nm_BuckoQuestProg()
+			if (BuckoQuestComplete = 1)
+				break
+			if (!QuestBloomField || QuestBloomField = "None")
+				break
+			
+			nm_setStatus("Quest", "Bucko Bloom: " . QuestBloomColor . " -> " . QuestBloomField)
+			remainingMins := (bloomQuestEndTick - A_TickCount) / 60000
+			if (remainingMins <= 0) {
+				FarmBloomMins := oldFarmBloomMins
+				return
+			}
+			FarmBloomMins := (remainingMins < 0.5) ? remainingMins : 0.5
+			nm_FarmBloom(true, QuestBloomField, BuckoStart[3], QuestBloomSlot, remainingMins * 60)
+		}
+		FarmBloomMins := oldFarmBloomMins
+	}
 	if(BuckoQuestComplete=1) {
 		nm_updateAction("Quest")
 		nm_gotoQuestgiver("Bucko")
@@ -22296,4 +22977,223 @@ nm_UpdateGUIVar(var)
 			MainGui[k].Value := %k%
 		}
 	}
+}
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------
+
+; BLOOM
+; ------------------------
+
+nma_farmBloom(field := "none", sprinkler := false, ctx := 0) {
+	screenCenterX := ctx["screenCenterX"]
+	screenCenterY := ctx["screenCenterY"]
+	threshold := ctx["threshold"]
+	searchWindow := ctx["searchWindow"]
+	offsetX := ctx["offsetX"]
+	offsetY := ctx["offsetY"]
+	movement := ctx["movement"]
+	limitLeft := ctx["limitLeft"]
+	limitRight := ctx["limitRight"]
+	limitTop := ctx["limitTop"]
+	limitBottom := ctx["limitBottom"]
+
+	hwnd := GetRobloxHWND()
+    GetRobloxClientPos(hwnd)
+	
+	if (field == "clover"){
+		if (!nma_searchBorder(5, "addon\border\clover.png", Round(windowWidth / 2) + Round(windowWidth * 0.03), Round(windowWidth / 2) - Round(windowWidth * 0.375), 0, windowHeight)){
+			limitLeft := 0
+		}
+		else if (!nma_searchBorder(5, "addon\border\clover.png", Round(windowWidth / 2) + Round(windowWidth * 0.03), Round(windowWidth / 2) - Round(windowWidth * 0.215), 0, windowHeight)){
+			limitLeft := windowWidth * 0.15625
+		}
+	}
+	else if (field == "bamboo"){
+		if (!nma_searchBorder(5, "addon\border\bamboo.png", Round(windowWidth / 2), Round(windowWidth / 2), Round(windowHeight / 2) - Round(windowHeight * 0.0365), Round(windowHeight * 0.073)) || !nma_searchBorder(5, "addon\border\bamboo n.png", Round(windowWidth / 2), Round(windowWidth / 2), Round(windowHeight / 2) - Round(windowHeight * 0.0365), Round(windowHeight * 0.073))){
+			limitLeft := 0
+		}
+	}
+	else if (field == "strawberry"){
+		if (!nma_searchBorder(5, "addon\border\strawberry.png", Round(windowWidth * 0.1367), Round(windowWidth / 2) - Round(windowWidth * 0.1367), Round(windowHeight / 2) - Round(windowHeight * 0.073), Round(windowHeight * 0.146)) || !nma_searchBorder(5, "addon\border\strawberry n.png", Round(windowWidth * 0.1367), Round(windowWidth / 2) - Round(windowWidth * 0.1367), Round(windowHeight / 2) - Round(windowHeight * 0.073), Round(windowHeight * 0.146))){
+			limitRight := windowWidth
+		}
+	}
+	else if (field == "cactus"){
+		if (!nma_searchBorder(5, "addon\border\cactus 1.png", 0, Round(windowWidth / 2), 0, Round(windowHeight * 0.2557)) || !nma_searchBorder(5, "addon\border\cactus 1 n.png", 0, Round(windowWidth / 2), 0, Round(windowHeight * 0.2557))){
+			limitBottom := windowHeight
+		}
+		if (!nma_searchBorder(5, "addon\border\cactus 2.png", Round(windowWidth / 2), Round(windowWidth / 2), Round(windowHeight * 0.694), windowHeight - Round(windowHeight * 0.694)) || !nma_searchBorder(5, "addon\border\cactus 2 n.png", Round(windowWidth / 2), Round(windowWidth / 2), Round(windowHeight * 0.694), windowHeight - Round(windowHeight * 0.694))){
+			limitTop := 0
+		}
+		else if (!nma_searchBorder(5, "addon\border\cactus 3.png", 0, Round(windowWidth * 0.3125), Round(windowHeight * 0.438), Round(windowHeight * 0.2922)) || !nma_searchBorder(5, "addon\border\cactus 3 n.png", 0, Round(windowWidth * 0.3125), Round(windowHeight * 0.438), Round(windowHeight * 0.2922))){
+			limitTop := 0
+		}
+	}
+	else if (field == "sunflower"){
+		if (!nma_searchBorder(5, "addon\border\strawberry.png", Round(windowWidth / 2) - Round(windowWidth * 0.15625), Round(windowWidth * 0.3125), 0, Round(windowHeight / 2) - Round(windowHeight * 0.13889)) || !nma_searchBorder(5, "addon\border\strawberry n.png", Round(windowWidth / 2) - Round(windowWidth * 0.15625), Round(windowWidth * 0.3125), 0, Round(windowHeight / 2) - Round(windowHeight * 0.13889))){
+			limitBottom := windowHeight
+		}
+	}
+	
+	resultPrev := [-1, -1, -1]
+	resultBloom := [1, 0, 0]
+	
+	reachedX := false
+	reachedY := false
+	
+	moving := false
+
+	regions := [[limitLeft, limitRight - limitLeft, limitTop, limitBottom - limitTop]]
+	exW := Round(windowHeight * 0.102030519)
+	exH := exW
+	Loop 10 {
+		if (regions.Length = 0)
+			break
+		r := regions.RemoveAt(1)
+		resultCounter := nm_imgSearch("addon/bloom brown.png", 3, r[1], r[2], r[3], r[4])
+		if (resultCounter[1] != 0)
+			continue
+		resultBloomTry := nm_imgSearch("addon/bloom flower.png", 1, resultCounter[2], Round(windowWidth * 0.03125), resultCounter[3] - Round(windowHeight * 0.014726056), Round(windowHeight * 0.036815143))
+		if (resultBloomTry[1] == 0) {
+			if (!nma_isBalloonBloomHit(resultBloomTry[2], resultBloomTry[3], windowWidth, windowHeight)) {
+			resultBloom := resultBloomTry
+			break
+		}
+		}
+		
+		rx := r[1], rw := r[2], ry := r[3], rh := r[4]
+		rightEdge := rx + rw
+		bottomEdge := ry + rh
+		exLeft := Max(rx, resultCounter[2] - exW/2)
+		exRight := Min(rightEdge, resultCounter[2] + exW/2)
+		exTop := Max(ry, resultCounter[3] - exH/2)
+		exBottom := Min(bottomEdge, resultCounter[3] + exH/2)
+		if ((exLeft - rx) > 20)
+			regions.Push([rx, exLeft - rx, ry, rh])
+		if ((rightEdge - exRight) > 20)
+			regions.Push([exRight, rightEdge - exRight, ry, rh])
+		if ((exTop - ry) > 20)
+			regions.Push([rx, rw, ry, exTop - ry])
+		if ((bottomEdge - exBottom) > 20)
+			regions.Push([rx, rw, exBottom, bottomEdge - exBottom])
+	}
+	
+	if (resultBloom[1] != 0)
+		return false
+
+	Loop 
+	{
+		if (resultBloom[1] == 0)
+		{
+			SendInput "{a up}{d up}{w up}{s up}"
+			if (!reachedX)
+			{
+				if (resultBloom[2]  > screenCenterX - threshold - offsetX && resultBloom[2] < screenCenterX + threshold - offsetX)
+				{
+					SendInput "{a up}{d up}"
+					reachedX := true
+				}
+				else if (resultBloom[2] < screenCenterX - offsetX)
+				{
+					SendInput "{a down}"
+					moving := true
+				}
+				else if (resultBloom[2] > screenCenterX - offsetX)
+				{
+					SendInput "{d down}"
+					moving := true
+				}
+			}
+			
+			if (!reachedY)
+			{
+				if (resultBloom[3] > screenCenterY - threshold - offsetY && resultBloom[3] < screenCenterY + threshold - offSetY)
+				{
+					SendInput "{w up}{s up}"
+					reachedY := true
+				}
+				else if (resultBloom[3] < screenCenterY - offsetY)
+				{
+					SendInput "{w down}"
+					moving := true
+				}
+				else if (resultBloom[3] > screenCenterY - offsetY)
+				{
+					SendInput "{s down}"
+					moving := true
+				}
+			}
+			
+			if (reachedX && reachedY)
+			{
+				if (sprinkler){
+					if (SprinklerType="Supreme" || SprinklerType="Basic") {
+						Send "{" SC_1 "}"
+					} else {
+						nm_JumpSprinkler()
+					}
+				}
+				SendInput "{LButton down}"
+				Loop
+				{
+					resultBloom := nm_imgSearch("addon/bloom flower.png", 1, screenCenterX - threshold - offsetX, threshold * 2, screenCenterY - threshold - offsetY,  threshold * 2)
+					if (resultBloom[1] != 0) 
+						break
+				}
+				SendInput "{LButton up}"
+				nm_createWalk(movement)
+				KeyWait "F14", "D T5 L"
+				KeyWait "F14", "T60 L"
+				nm_endWalk()
+				return true
+			}
+			
+			resultPrev := resultBloom
+		}
+		else
+		{
+			SendInput "{a up}{d up}{w up}{s up}"
+			if (moving){
+				if (Abs(screenCenterX - resultPrev[2]) < (Round(windowWidth * 0.078)) && Abs(screenCenterY - resultPrev[3]) < (Round(windowHeight * 0.0736303))){
+					nm_createWalk(movement)
+					KeyWait "F14", "D T5 L"
+					KeyWait "F14", "T60 L"
+					nm_endWalk()
+					return true
+				}
+				else{
+					Loop 5{
+						resultBloom := nm_imgSearch("addon/bloom flower.png", 1, resultPrev[2] - (searchWindow / 2), searchWindow, resultPrev[3] - (searchWindow / 2), searchWindow)
+						if (resultBloom[1] == 0) 
+							break
+					}
+					if (resultBloom[1] != 0){
+						return false
+					}
+				}
+			}
+			else
+				return false
+		}
+
+		resultBloom := nm_imgSearch("addon/bloom flower.png", 3, resultBloom[2] - (searchWindow / 2), searchWindow, resultBloom[3] - (searchWindow / 2), searchWindow)
+	}
+}
+nma_isBalloonBloomHit(foundX, foundY, windowWidth, windowHeight) {
+	local searchX := Max(0, foundX)
+	local searchY := Max(0, foundY - 20)
+	local resultBalloonGreen := nm_imgSearch("addon/balloon green.png", 0, searchX, Round(windowWidth * 0.0234375), searchY, Round(windowHeight * 0.02922))
+	return (resultBalloonGreen[1] == 0)
+}
+
+nma_searchBorder(count, img, x, width, y, height){
+	notFound := false
+	Loop count {
+		if (nm_imgSearch(img, 0, x, width, y, height)[1] != 0){
+			notFound := true
+			break
+		}
+		Sleep 20
+	}
+	return notFound
 }

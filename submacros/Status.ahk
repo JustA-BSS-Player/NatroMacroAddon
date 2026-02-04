@@ -1825,7 +1825,7 @@ nm_command(command)
 				discord.SendEmbed("``" ((StrLen(params[3]) > 0) ? params[3] : "<blank>") "`` is not a valid setting!\n``?set bugrun`` must be followed by ``on``, ``off``, ``1``, or ``0``", 16711731, , , , id)
 			}
 			case "priority", "priorityList", "priorityListNumeric":
-			value:=((params[3] = "default") ? 12345678 : params[3]),v := Settings["PriorityListNumeric"]
+			value:=((params[3] = "default") ? 123456789 : params[3]),v := Settings["PriorityListNumeric"]
 			if (value ~= v.regex)
 			{
 				for i,j in listArr:=StrSplit(value) {
