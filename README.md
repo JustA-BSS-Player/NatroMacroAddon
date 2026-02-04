@@ -26,21 +26,9 @@ _Basically the same as `Natro Macro`_
 - Set the duration in the `Mins` textbox
 - Set the `To Hive By` method with the arrows
 - Set the sprinkler placement method:
-
-	<table style="border:none;border-collapse:collapse;border-spacing:0;">
-		<tr>
-			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>None</code></td>
-			<td style="border:none;padding:0 0 0 10px;"><em>no checkbox enabled</em></td>
-		</tr>
-		<tr>
-			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>Sprinkler on bloom</code></td>
-			<td style="border:none;padding:0 0 0 10px;"><em>places the sprinkler down on each bloom</em></td>
-		</tr>
-		<tr>
-			<td style="border:none;padding:0;"><span style="padding-right:10px;font-size:0.6em;">&#9675;</span><code>Sprinkler on field</code></td>
-			<td style="border:none;padding:0 0 0 10px;"><em>places the sprinkler down upon arrival at the field</em></td>
-		</tr>
-	</table>
+	- `None`: _no checkbox enabled_
+	- `Sprinkler on bloom`: _places the sprinkler down on each bloom_
+	- `Sprinkler on field`: _places the sprinkler down upon arrival at the field_
 
 ___The sprinkler settings also apply during bloom quests___
 
@@ -70,24 +58,15 @@ __Too many obstacles on the field:__
 - Mushroom field
 
 ### Field limit
-A screen limit has been set for closely neighboring fields, beyond which blooms are not detected, to prevent moving to other fields.<br/>
-In some cases, this may cause blooms that are technically within the correct field but outside the limit to go undetected. <br/>
-This issue has been resolved in certain fields; however, it does not work when fog is present, so the limit remains in place. <br/>
-As a result, alignment moves the player to a position within the field where the majority of blooms can be detected.
+A screen limit has been set for closely neighboring fields, beyond which blooms are not detected, to prevent moving to other fields. In some cases, this may cause blooms that are technically within the correct field but outside the limit to go undetected. This issue has been resolved in certain fields; however, it does not work when fog is present, so the limit remains in place. As a result, alignment moves the player to a position within the field where the majority of blooms can be detected.
 
 ### Misdetection
 
-Balloons use the same icon that the macro searches for when detecting blooms. As a result, balloons may occasionally be misdetected as blooms. <br/>
-The frequency of this issue has been reduced, but it can still occur. This does not significantly affect bloom farming, <br/>
-as the macro typically misdetects it only once or twice before continuing to collect petals. <br/>
-However, in rare cases, this may cause drifting off the field, and no reliable solution is currently available. <br/>
-Puffshrooms also use the same icon; however, this issue does not occur with them.
+Balloons use the same icon that the macro searches for when detecting blooms. As a result, balloons may occasionally be misdetected as blooms. The frequency of this issue has been reduced, but it can still occur. This does not significantly affect bloom farming, as the macro typically misdetects it only once or twice before continuing to collect petals. However, in rare cases, this may cause drifting off the field, and no reliable solution is currently available. Puffshrooms also use the same icon; however, this issue does not occur with them.
 
 ### Early Stage
 
-Bloom farming has been tested on both main and beginner profiles, as well as across multiple screen resolutions, and it seems to work in all cases. <br/>
-However, this does not guarantee that it will work for everyone 100% of the time. This project is still in a very early stage and is not as polished as Natro Macro. <br/>
-If major issues occur, efforts will be made to resolve them when possible.
+Bloom farming has been tested on both main and beginner profiles, as well as across multiple screen resolutions, and it seems to work in all cases. However, this does not guarantee that it will work for everyone 100% of the time. This project is still in a very early stage and is not as polished as Natro Macro. If major issues occur, efforts will be made to resolve them when possible.
 
 ## ©️ Credits / License
 
