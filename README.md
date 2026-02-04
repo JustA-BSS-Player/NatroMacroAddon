@@ -50,7 +50,7 @@ ___The sprinkler settings also apply during bloom quests___
 - Set the maximum duration limit in the `Max Mins` textbox
 - Set the fields for each petal color with the `"Color" Petal` dropdowns
 
-___The ___
+___The fields are ordered based on how good they are for collecting that color___
 
 <br/>
 Bloom quest handling is implemented for:
