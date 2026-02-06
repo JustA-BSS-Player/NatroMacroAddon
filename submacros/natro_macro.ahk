@@ -1383,7 +1383,7 @@ BuckoBee := Map("Abilities",
 		,[2,"Collect","Bamboo"]
 		,[3,"Collect","Pine Tree"]]
 
-	, "Bucko Bee Petals",
+	, "Petals",
 		[[1,"Bloom","Blue"]
 		,[2,"Bloom","Blue Clover"]
 		,[3,"Bloom","Blue Pineapple"]])
@@ -1458,7 +1458,7 @@ RileyBee := Map("Abilities",
 		,[2,"Collect","Strawberry"]
 		,[3,"Collect","Rose"]]
 
-	, "Riley Bee Petals",
+	, "Petals",
 		[[1,"Bloom","Red"]
 		,[2,"Bloom","Red Clover"]
 		,[3,"Bloom","Red Spider"]])
@@ -18595,396 +18595,6 @@ nm_PolarQuest(){
 	}
 }
 
-nm_isQuestSlotIncomplete(startY, slot) {
-	global QuestBarInset, QuestBarSize, QuestBarGapSize
-	hwnd := GetRobloxHWND()
-	if (!hwnd)
-		return false
-	offsetY := GetYOffset(hwnd)
-	GetRobloxClientPos(hwnd)
-
-	questbarColor := PixelGetColor(windowX+QuestBarInset+10, windowY+QuestBarSize*(slot-1)+startY+QuestBarGapSize+5)
-	return (questbarColor=0xF46C55) || (questbarColor=0x6EFF60)
-}
-
-nm_FarmBloom(force := false, overrideField := "", questStartY := 0, questSlot := 0, maxDurationSeconds := 0){
-	global FarmBloomCheck, FarmBloomField, FarmBloomMins, FarmBloomSprinkler
-	global FarmBloomReturnBy
-	global QuestGatherReturnBy
-	global FarmBloomSprinklerBloom, FarmBloomSprinklerField
-	global VBState, youDied, SprinklerType, SC_1
-	global RotRight, RotLeft, RotUp, RotDown, ZoomOut
-	global BackpackPercentFiltered
-	local bloomField := overrideField ? overrideField : FarmBloomField
-	hwnd := GetRobloxHWND()
-	if (hwnd)
-		GetRobloxClientPos(hwnd)
-
-	FieldAlign := Map()
-	FieldAlign["bamboo"]     := [[39, 18, 11, 12], ['RightKey', 'FwdKey', 'LeftKey', 'LeftKey, BackKey']]
-	FieldAlign["blueflower"] := [[17, 49, 19, 11], ['FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
-	FieldAlign["cactus"]     := [[23, 33, 26, 16, 3], ['BackKey', 'LeftKey', 'FwdKey', 'RightKey', 'FwdKey']]
-	FieldAlign["clover"]     := [[29, 18, 2, 20, 23, 5], ['RightKey', 'FwdKey', 'RightKey', 'RightKey, BackKey', 'LeftKey', 'BackKey']]
-	FieldAlign["coconut"]    := [[21, 30, 16], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
-	FieldAlign["dandelion"]  := [[10, 40, 25, 12, 14], ['BackKey', 'LeftKey', "FwdKey", 'RightKey, BackKey', 'RightKey']]
-	FieldAlign["pepper"]     := [[24, 32, 20], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
-	FieldAlign["pinetree"]   := [[23, 31, 18], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
-	FieldAlign["pineapple"]  := [[23, 33, 4, 18], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey', '']]
-	FieldAlign["pumpkin"]    := [[3, 15, 33, 10, 12], ['FwdKey, RightKey', 'FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
-	FieldAlign["rose"]       := [[3, 31, 20, 10], ['LeftKey, BackKey', 'LeftKey', 'BackKey', 'RightKey, FwdKey']]
-	FieldAlign["spider"]     := [[26, 28, 19], ['FwdKey', 'LeftKey', 'RightKey, BackKey']]
-	FieldAlign["strawberry"] := [[22, 26, 15, 3], ['FwdKey', 'LeftKey', 'RightKey, BackKey', 'BackKey']]
-	FieldAlign["sunflower"]  := [[20, 33, 7, 16], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey']]
-
-	if (!FarmBloomCheck && !force)
-		return
-	
-	;interrupts
-	if ((VBState=1) || nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
-		return
-	
-	;convert field name from GUI format to function format
-	;GUI uses: "Sunflower", "Blue Flower", "Pine Tree", etc.
-	;Function expects: "sunflower", "blueflower", "pinetree", etc.
-	fieldNameLower := StrLower(bloomField)
-	fieldNameForFunction := StrReplace(fieldNameLower, " ", "")
-	fieldYawDir := ""
-	fieldYawSteps := 0
-	
-	nm_updateAction("FarmBloom")
-	nm_setStatus("Starting", "Bloom Farming: " . bloomField)
-	
-	;reset to start from hive
-	nm_Reset()
-	if (VBState=1)
-		return
-	
-	;go to field first
-	nm_gotoField(bloomField)
-	if (VBState=1)
-		return
-	
-	;apply camera rotation for fields
-	if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
-		sendinput "{" RotLeft " 2}"
-		fieldYawDir := "Left"
-		fieldYawSteps := 2
-	}
-	else if (fieldNameForFunction == "dandelion" || fieldNameForFunction == "strawberry") {
-		sendinput "{" RotRight " 2}"
-		fieldYawDir := "Right"
-		fieldYawSteps := 2
-	}
-	sendinput "{" RotUp " 10}"
-	if (FarmBloomSprinklerField) {
-		if (SprinklerType="Supreme" || SprinklerType="Basic")
-			Send "{" SC_1 "}"
-		else
-			nm_JumpSprinkler()
-	}
-
-	if (questStartY && questSlot) {
-    	nm_OpenMenu("questlog")
-	}
-
-	CoordMode "Pixel", "Screen"
-	CoordMode "Mouse", "Screen"
-
-	bloomCtx := Map()
-	bloomCtx["screenCenterX"] := windowWidth / 2
-	bloomCtx["screenCenterY"] := windowHeight / 2
-	bloomCtx["threshold"] := Round(windowHeight * 0.029452108)
-	bloomCtx["searchWindow"] := Round(windowHeight * 0.044178163)
-	bloomCtx["offsetX"] := Round(windowWidth * 0.002)
-	bloomCtx["offsetY"] := Round(windowHeight * 0.0736303)
-	bloomCtx["movement"] :=
-		(
-		' nm_Walk(2.5, RightKey) '
-		' nm_Walk(0.833, BackKey) '
-		' nm_Walk(2.357, BackKey, LeftKey) '
-		' nm_Walk(1.667, LeftKey) '
-		' nm_Walk(2.357, LeftKey, FwdKey) '
-		' nm_Walk(1.667, FwdKey) '
-		' nm_Walk(2.357, FwdKey, RightKey) '
-		' nm_Walk(1.667, RightKey) '
-		' nm_Walk(2.357, RightKey, BackKey) '
-		)
-
-	limitLeft := 0
-	limitRight := windowWidth
-	limitTop := 0
-	limitBottom := windowHeight
-	switch fieldNameForFunction{
-		case "clover":
-			limitLeft := Round(windowWidth * 0.39)
-		case "spider":
-			limitLeft := Round(windowWidth * 0.1836)
-			limitRight := windowWidth - limitLeft
-		case "strawberry":
-			limitRight := Round(windowWidth * 0.78125)
-		case "sunflower":
-			limitBottom := Round(windowHeight * 0.876512418)
-		case "pumpkin":
-			limitBottom := Round(windowHeight * 0.876512418)
-			limitLeft := Round(windowWidth * 0.18)
-		case "bamboo":
-			limitLeft := Round(windowWidth * 0.1074)
-		case "cactus":
-			limitBottom := Round(windowHeight * 0.876512418)
-			limitTop := Round(windowHeight * 0.36523)
-		case "rose":
-			limitLeft := Round(windowWidth * 0.3418)
-	}
-	bloomCtx["limitLeft"] := limitLeft
-	bloomCtx["limitRight"] := limitRight
-	bloomCtx["limitTop"] := limitTop
-	bloomCtx["limitBottom"] := limitBottom
-	
-	;calculate end time
-	if (maxDurationSeconds && maxDurationSeconds > 0)
-		durationSeconds := maxDurationSeconds
-	else
-		durationSeconds := (questStartY && questSlot) ? 999999 : (FarmBloomMins * 60)
-	endTick := A_TickCount + (durationSeconds * 1000)
-	falseStartTick := 0
-	didNoBloomAlign := false
-	lastBagCheck := 0
-	deathRecoveries := 0
-
-	screenCenterX := windowWidth / 2
-	screenCenterY := windowHeight / 2
-	lastQuestPoll := 0
-
-	phaseCounter := 1
-	isAligning := false
-	alignInterrupt := true
-	
-	;run bloom farming for specified duration
-	while (A_TickCount < endTick) {
-
-		if (!FarmBloomCheck && !force)
-			break
-
-		; periodic bag check + convert
-		if (!lastBagCheck || (A_TickCount - lastBagCheck) >= 1000) {
-			lastBagCheck := A_TickCount
-			if (BackpackPercentFiltered >= 95) {
-				pauseStartTick := A_TickCount
-				nm_setStatus("Converting", "Backpack")
-				if (FarmBloomReturnBy = "Reset")
-					nm_Reset()
-				else {
-					if (fieldYawDir == "Left")
-						sendinput "{" RotRight " " fieldYawSteps "}"
-					else if (fieldYawDir == "Right")
-						sendinput "{" RotLeft " " fieldYawSteps "}"
-					sendinput "{" RotDown " 4}"
-					nm_walkFrom(bloomField)
-				}
-				nm_findHiveSlot()
-				nm_convert()
-				if (VBState=1)
-					break
-				if (youDied) {
-					deathRecoveries += 1
-					if (deathRecoveries > 10)
-						break
-					nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
-					nm_Reset()
-					if (VBState=1)
-						break
-					nm_gotoField(bloomField)
-					if (VBState=1)
-						break
-					if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
-						sendinput "{" RotLeft " 2}"
-						fieldYawDir := "Left"
-						fieldYawSteps := 2
-					}
-					else if (fieldNameForFunction == "strawberry") {
-						sendinput "{" RotLeft " 4}"
-						fieldYawDir := "Left"
-						fieldYawSteps := 4
-					}
-					else if (fieldNameForFunction == "dandelion") {
-						sendinput "{" RotRight " 2}"
-						fieldYawDir := "Right"
-						fieldYawSteps := 2
-					}
-					sendinput "{" RotUp " 10}"
-					if (FarmBloomSprinklerField) {
-						if (SprinklerType="Supreme" || SprinklerType="Basic")
-							Send "{" SC_1 "}"
-						else
-							nm_JumpSprinkler()
-					}
-					if (questStartY && questSlot)
-						nm_OpenMenu("questlog")
-					endTick += (A_TickCount - pauseStartTick)
-					falseStartTick := 0
-					didNoBloomAlign := false
-					phaseCounter := 1
-					isAligning := false
-					alignInterrupt := true
-					continue
-				}
-				nm_setStatus("Traveling", "Bloom Farming: " . bloomField)
-				nm_gotoField(bloomField)
-				sendinput "{" RotUp " 10}"
-				if (FarmBloomSprinklerField) {
-					if (SprinklerType="Supreme" || SprinklerType="Basic")
-						Send "{" SC_1 "}"
-					else
-						nm_JumpSprinkler()
-				}
-				endTick += (A_TickCount - pauseStartTick)
-				falseStartTick := 0
-				didNoBloomAlign := false
-				continue
-			}
-		}
-		;check interrupts
-		if (VBState=1)
-			break
-		if (youDied) {
-			pauseStartTick := A_TickCount
-			deathRecoveries += 1
-			if (deathRecoveries > 10)
-				break
-			nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
-			nm_Reset()
-			if (VBState=1)
-				break
-			nm_gotoField(bloomField)
-			if (VBState=1)
-				break
-			if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
-				sendinput "{" RotLeft " 2}"
-				fieldYawDir := "Left"
-				fieldYawSteps := 2
-			}
-			else if (fieldNameForFunction == "strawberry") {
-				sendinput "{" RotLeft " 4}"
-				fieldYawDir := "Left"
-				fieldYawSteps := 4
-			}
-			else if (fieldNameForFunction == "dandelion") {
-				sendinput "{" RotRight " 2}"
-				fieldYawDir := "Right"
-				fieldYawSteps := 2
-			}
-			sendinput "{" RotUp " 10}"
-			if (FarmBloomSprinklerField) {
-				if (SprinklerType="Supreme" || SprinklerType="Basic")
-					Send "{" SC_1 "}"
-				else
-					nm_JumpSprinkler()
-			}
-			if (questStartY && questSlot)
-				nm_OpenMenu("questlog")
-			endTick += (A_TickCount - pauseStartTick)
-			falseStartTick := 0
-			didNoBloomAlign := false
-			phaseCounter := 1
-			isAligning := false
-			alignInterrupt := true
-			continue
-		}
-		if (nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
-			break
-		; quest progress polling (every 1s or 2s is fine)
-		if (questStartY && questSlot && (!lastQuestPoll || (A_TickCount - lastQuestPoll) >= 1000)) {
-			lastQuestPoll := A_TickCount
-			if (!nm_isQuestSlotIncomplete(questStartY, questSlot)) {
-				break
-			}
-		}
-		
-		if (!isAligning || alignInterrupt){
-			foundBloom := nma_farmBloom(fieldNameForFunction, FarmBloomSprinklerBloom, bloomCtx)
-			if (foundBloom) {
-				falseStartTick := 0
-				isAligning := false
-				didNoBloomAlign := false
-				bloomCtx["limitLeft"] := limitLeft
-				bloomCtx["limitRight"] := limitRight
-				bloomCtx["limitTop"] := limitTop
-				bloomCtx["limitBottom"] := limitBottom
-				Sleep 200
-				continue
-			}
-		}
-		
-		if (isAligning){
-			if ((fieldNameForFunction == "dandelion" && phaseCounter < 3) || (fieldNameForFunction == "cactus" && phaseCounter < 3)){
-				alignInterrupt := false
-			}
-			else{
-				alignInterrupt := true
-			}
-
-			if ((fieldNameForFunction == "clover" && phaseCounter < 5) || fieldNameForFunction == "sunflower" || fieldNameForFunction == "bamboo" || (fieldNameForFunction == "strawberry" && phaseCounter > 1) || (fieldNameForFunction == "pumpkin" && phaseCounter > 1) || (fieldNameForFunction == "cactus" && phaseCounter > 2)){
-				bloomCtx["limitLeft"] := 0
-				bloomCtx["limitRight"] := windowWidth
-				bloomCtx["limitTop"] := 0
-				bloomCtx["limitBottom"] := windowHeight
-			}
-			else{
-				bloomCtx["limitLeft"] := limitLeft
-				bloomCtx["limitRight"] := limitRight
-				bloomCtx["limitTop"] := limitTop
-				bloomCtx["limitBottom"] := limitBottom
-			}
-
-			value := FieldAlign[fieldNameForFunction][1][phaseCounter]
-			if (value != "" && value != -1){
-				nm_createWalk(' nm_Walk( ' FieldAlign[fieldNameForFunction][1][phaseCounter] ', ' FieldAlign[fieldNameForFunction][2][phaseCounter] ') ')
-				KeyWait "F14", "D T5 L"
-				KeyWait "F14", "T60 L"
-				nm_endWalk()
-				phaseCounter++
-			}
-			else{
-				isAligning := false
-				phaseCounter := 1
-				falseStartTick := 0
-			}
-		}
-
-		if (!falseStartTick)
-			falseStartTick := A_TickCount
-		
-		if (!didNoBloomAlign && (A_TickCount - falseStartTick) >= 6000) {
-			didNoBloomAlign := true
-			isAligning := true
-			falseStartTick := 0
-		}
-		
-		if (!isAligning){
-			if (phaseCounter != 1)
-				phaseCounter := 1
-			Sleep 100
-		}
-			
-	}
-	
-	nm_setStatus("Completed", "Bloom Farming: " . bloomField)
-	returnBy := (questStartY && questSlot) ? QuestGatherReturnBy : FarmBloomReturnBy
-	if (returnBy = "Reset")
-		nm_Reset()
-	else {
-		if (fieldYawDir == "Left")
-			sendinput "{" RotRight " " fieldYawSteps "}"
-		else if (fieldYawDir == "Right")
-			sendinput "{" RotLeft " " fieldYawSteps "}"
-		sendinput "{" RotDown " 4}"
-		nm_walkFrom(bloomField)
-	}
-	if (VBState=1)
-		return
-	nm_findHiveSlot()
-	nm_convert()
-}
 
 nm_RileyQuestProg(){
 	global RileyQuestCheck, RileyBee, RileyQuest, RileyStart, HiveBees, FieldName1, LastAntPass, LastRedBoost, RileyLadybugs, RileyScorpions, RileyAll
@@ -19225,7 +18835,7 @@ nm_RileyQuestProg(){
 		}
 		IniWrite rileyProgress, "settings\nm_config.ini", "Quests", "RileyQuestProgress"
 		MainGui["RileyQuestProgress"].Text := StrReplace(rileyProgress, "|", "`n")
-		if(RileyLadybugs=0 && RileyScorpions=0 && RileyAll=0 && QuestGatherField="None" && QuestBloomField="None" && QuestAnt=0 && QuestRedBoost=0 && QuestFeed="None" && QuestRedAnyField=0){
+		if(RileyLadybugs=0 && RileyScorpions=0 && RileyAll=0 && QuestGatherField="None" && QuestAnt=0 && QuestRedBoost=0 && QuestFeed="None" && QuestRedAnyField=0 && QuestBloomField="None"){
 			RileyQuestComplete:=1
 		} else { ;check if all doable things are done and everything else is on cooldown
 			if(QuestGatherField!="None" || (QuestAnt && (nowUnix()-LastAntPass)<7200) || (RileyLadybugs && (nowUnix()-LastBugrunLadybugs)<floor(330*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01))) || (RileyScorpions && (nowUnix()-LastBugrunScorpions)<floor(1230*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01)))) { ;there is at least one thing no longer on cooldown
@@ -19552,7 +19162,7 @@ nm_BuckoQuestProg(){
 		}
 		IniWrite buckoProgress, "settings\nm_config.ini", "Quests", "BuckoQuestProgress"
 		MainGui["BuckoQuestProgress"].Text := StrReplace(buckoProgress, "|", "`n")
-		if(BuckoRhinoBeetles=0 && BuckoMantis=0 && QuestGatherField="None" && QuestAnt=0 && QuestBlueBoost=0 && QuestFeed="None" && QuestBlueAnyField=0) {
+		if(BuckoRhinoBeetles=0 && BuckoMantis=0 && QuestGatherField="None" && QuestAnt=0 && QuestBlueBoost=0 && QuestFeed="None" && QuestBlueAnyField=0 && QuestBloomField="None") {
 				BuckoQuestComplete:=1
 			} else { ;check if all doable things are done and everything else is on cooldown
 				if(QuestGatherField!="None" || (QuestAnt && (nowUnix()-LastAntPass)<7200) || (BuckoRhinoBeetles && (nowUnix()-LastBugrunRhinoBeetles)<floor(330*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01))) || (BuckoMantis && (nowUnix()-LastBugrunMantis)<floor(1230*(1-(MonsterRespawnTime?MonsterRespawnTime:0)*0.01)))) { ;there is at least one thing no longer on cooldown
@@ -22983,6 +22593,401 @@ nm_UpdateGUIVar(var)
 
 ; BLOOM
 ; ------------------------
+nm_isQuestSlotIncomplete(startY, slot) {
+	global QuestBarInset, QuestBarSize, QuestBarGapSize
+	hwnd := GetRobloxHWND()
+	if (!hwnd)
+		return false
+	offsetY := GetYOffset(hwnd)
+	GetRobloxClientPos(hwnd)
+
+	questbarColor := PixelGetColor(windowX+QuestBarInset+10, windowY+QuestBarSize*(slot-1)+startY+QuestBarGapSize+5)
+	return (questbarColor=0xF46C55) || (questbarColor=0x6EFF60)
+}
+
+nm_FarmBloom(force := false, overrideField := "", questStartY := 0, questSlot := 0, maxDurationSeconds := 0){
+	global FarmBloomCheck, FarmBloomField, FarmBloomMins, FarmBloomSprinkler
+	global FarmBloomReturnBy
+	global QuestGatherReturnBy
+	global FarmBloomSprinklerBloom, FarmBloomSprinklerField
+	global VBState, youDied, SprinklerType, SC_1
+	global RotRight, RotLeft, RotUp, RotDown, ZoomOut
+	global BackpackPercentFiltered
+	local bloomField := overrideField ? overrideField : FarmBloomField
+	hwnd := GetRobloxHWND()
+	if (hwnd)
+		GetRobloxClientPos(hwnd)
+
+	FieldAlign := Map()
+	FieldAlign["bamboo"]     := [[39, 18, 11, 12], ['RightKey', 'FwdKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["blueflower"] := [[17, 49, 19, 11], ['FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["cactus"]     := [[23, 33, 26, 16, 3], ['BackKey', 'LeftKey', 'FwdKey', 'RightKey', 'FwdKey']]
+	FieldAlign["clover"]     := [[29, 18, 2, 20, 23, 5], ['RightKey', 'FwdKey', 'RightKey', 'RightKey, BackKey', 'LeftKey', 'BackKey']]
+	FieldAlign["coconut"]    := [[21, 30, 16], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["dandelion"]  := [[10, 40, 25, 12, 14], ['BackKey', 'LeftKey', "FwdKey", 'RightKey, BackKey', 'RightKey']]
+	FieldAlign["pepper"]     := [[24, 32, 20], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["pinetree"]   := [[23, 31, 18], ['FwdKey', 'RightKey', 'LeftKey, BackKey']]
+	FieldAlign["pineapple"]  := [[23, 33, 4, 18], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey', '']]
+	FieldAlign["pumpkin"]    := [[3, 15, 33, 10, 12], ['FwdKey, RightKey', 'FwdKey', 'RightKey', 'LeftKey', 'LeftKey, BackKey']]
+	FieldAlign["rose"]       := [[3, 31, 20, 10], ['LeftKey, BackKey', 'LeftKey', 'BackKey', 'RightKey, FwdKey']]
+	FieldAlign["spider"]     := [[26, 28, 19], ['FwdKey', 'LeftKey', 'RightKey, BackKey']]
+	FieldAlign["strawberry"] := [[22, 26, 15, 3], ['FwdKey', 'LeftKey', 'RightKey, BackKey', 'BackKey']]
+	FieldAlign["sunflower"]  := [[20, 33, 7, 16], ['FwdKey', 'LeftKey', 'RightKey', 'RightKey, BackKey']]
+
+	if (!FarmBloomCheck && !force)
+		return
+	
+	;interrupts
+	if ((VBState=1) || nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
+		return
+	
+	;convert field name from GUI format to function format
+	;GUI uses: "Sunflower", "Blue Flower", "Pine Tree", etc.
+	;Function expects: "sunflower", "blueflower", "pinetree", etc.
+	fieldNameLower := StrLower(bloomField)
+	fieldNameForFunction := StrReplace(fieldNameLower, " ", "")
+	fieldYawDir := ""
+	fieldYawSteps := 0
+	
+	nm_updateAction("FarmBloom")
+	nm_setStatus("Starting", "Bloom Farming: " . bloomField)
+	
+	;reset to start from hive
+	nm_Reset()
+	if (VBState=1)
+		return
+	
+	;go to field first
+	nm_gotoField(bloomField)
+	if (VBState=1)
+		return
+
+	Sleep 200
+	;apply camera rotation for fields
+	if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+		sendinput "{" RotLeft " 2}"
+		fieldYawDir := "Left"
+		fieldYawSteps := 2
+	}
+	else if (fieldNameForFunction == "dandelion" || fieldNameForFunction == "strawberry") {
+		sendinput "{" RotRight " 2}"
+		fieldYawDir := "Right"
+		fieldYawSteps := 2
+	}
+	sendinput "{" RotUp " 10}"
+	if (FarmBloomSprinklerField) {
+		if (SprinklerType="Supreme" || SprinklerType="Basic")
+			Send "{" SC_1 "}"
+		else
+			nm_JumpSprinkler()
+	}
+
+	if (questStartY && questSlot) {
+    	nm_OpenMenu("questlog")
+	}
+
+	CoordMode "Pixel", "Screen"
+	CoordMode "Mouse", "Screen"
+
+	bloomCtx := Map()
+	bloomCtx["screenCenterX"] := windowWidth / 2
+	bloomCtx["screenCenterY"] := windowHeight / 2
+	bloomCtx["threshold"] := Round(windowHeight * 0.029452108)
+	bloomCtx["searchWindow"] := Round(windowHeight * 0.044178163)
+	bloomCtx["offsetX"] := Round(windowWidth * 0.002)
+	bloomCtx["offsetY"] := Round(windowHeight * 0.0736303)
+	bloomCtx["movement"] :=
+		(
+		' nm_Walk(2.5, RightKey) '
+		' nm_Walk(0.833, BackKey) '
+		' nm_Walk(2.357, BackKey, LeftKey) '
+		' nm_Walk(1.667, LeftKey) '
+		' nm_Walk(2.357, LeftKey, FwdKey) '
+		' nm_Walk(1.667, FwdKey) '
+		' nm_Walk(2.357, FwdKey, RightKey) '
+		' nm_Walk(1.667, RightKey) '
+		' nm_Walk(2.357, RightKey, BackKey) '
+		)
+
+	limitLeft := 0
+	limitRight := windowWidth
+	limitTop := 0
+	limitBottom := windowHeight
+	switch fieldNameForFunction{
+		case "clover":
+			limitLeft := Round(windowWidth * 0.39)
+		case "spider":
+			limitLeft := Round(windowWidth * 0.1836)
+			limitRight := windowWidth - limitLeft
+		case "strawberry":
+			limitRight := Round(windowWidth * 0.78125)
+		case "sunflower":
+			limitBottom := Round(windowHeight * 0.876512418)
+		case "pumpkin":
+			limitBottom := Round(windowHeight * 0.876512418)
+			limitLeft := Round(windowWidth * 0.18)
+		case "bamboo":
+			limitLeft := Round(windowWidth * 0.1074)
+		case "cactus":
+			limitBottom := Round(windowHeight * 0.876512418)
+			limitTop := Round(windowHeight * 0.36523)
+		case "rose":
+			limitLeft := Round(windowWidth * 0.3418)
+	}
+	bloomCtx["limitLeft"] := limitLeft
+	bloomCtx["limitRight"] := limitRight
+	bloomCtx["limitTop"] := limitTop
+	bloomCtx["limitBottom"] := limitBottom
+	
+	;calculate end time
+	if (maxDurationSeconds && maxDurationSeconds > 0)
+		durationSeconds := maxDurationSeconds
+	else
+		durationSeconds := (questStartY && questSlot) ? 999999 : (FarmBloomMins * 60)
+	endTick := A_TickCount + (durationSeconds * 1000)
+	falseStartTick := 0
+	didNoBloomAlign := false
+	lastBagCheck := 0
+	deathRecoveries := 0
+
+	screenCenterX := windowWidth / 2
+	screenCenterY := windowHeight / 2
+	lastQuestPoll := 0
+
+	phaseCounter := 1
+	isAligning := false
+	alignInterrupt := true
+	
+	;run bloom farming for specified duration
+	while (A_TickCount < endTick) {
+
+		if (!FarmBloomCheck && !force)
+			break
+
+		; periodic bag check + convert
+		if (!lastBagCheck || (A_TickCount - lastBagCheck) >= 1000) {
+			lastBagCheck := A_TickCount
+			if (BackpackPercentFiltered >= 95) {
+				pauseStartTick := A_TickCount
+				nm_setStatus("Converting", "Backpack")
+				if (FarmBloomReturnBy = "Reset")
+					nm_Reset()
+				else {
+					if (fieldYawDir == "Left")
+						sendinput "{" RotRight " " fieldYawSteps "}"
+					else if (fieldYawDir == "Right")
+						sendinput "{" RotLeft " " fieldYawSteps "}"
+					sendinput "{" RotDown " 4}"
+					nm_walkFrom(bloomField)
+				}
+				nm_findHiveSlot()
+				nm_convert()
+				if (VBState=1)
+					break
+				if (youDied) {
+					deathRecoveries += 1
+					if (deathRecoveries > 10)
+						break
+					nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
+					nm_Reset()
+					if (VBState=1)
+						break
+					nm_gotoField(bloomField)
+					if (VBState=1)
+						break
+					Sleep 200
+					if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+						sendinput "{" RotLeft " 2}"
+						fieldYawDir := "Left"
+						fieldYawSteps := 2
+					}
+					else if (fieldNameForFunction == "strawberry") {
+						sendinput "{" RotLeft " 4}"
+						fieldYawDir := "Left"
+						fieldYawSteps := 4
+					}
+					else if (fieldNameForFunction == "dandelion") {
+						sendinput "{" RotRight " 2}"
+						fieldYawDir := "Right"
+						fieldYawSteps := 2
+					}
+					sendinput "{" RotUp " 10}"
+					if (FarmBloomSprinklerField) {
+						if (SprinklerType="Supreme" || SprinklerType="Basic")
+							Send "{" SC_1 "}"
+						else
+							nm_JumpSprinkler()
+					}
+					if (questStartY && questSlot)
+						nm_OpenMenu("questlog")
+					endTick += (A_TickCount - pauseStartTick)
+					falseStartTick := 0
+					didNoBloomAlign := false
+					phaseCounter := 1
+					isAligning := false
+					alignInterrupt := true
+					continue
+				}
+				nm_setStatus("Traveling", "Bloom Farming: " . bloomField)
+				nm_gotoField(bloomField)
+				sendinput "{" RotUp " 10}"
+				if (FarmBloomSprinklerField) {
+					if (SprinklerType="Supreme" || SprinklerType="Basic")
+						Send "{" SC_1 "}"
+					else
+						nm_JumpSprinkler()
+				}
+				endTick += (A_TickCount - pauseStartTick)
+				falseStartTick := 0
+				didNoBloomAlign := false
+				continue
+			}
+		}
+		;check interrupts
+		if (VBState=1)
+			break
+		if (youDied) {
+			pauseStartTick := A_TickCount
+			deathRecoveries += 1
+			if (deathRecoveries > 10)
+				break
+			nm_setStatus("Recovering", "Bloom Farming: " . bloomField)
+			nm_Reset()
+			if (VBState=1)
+				break
+			nm_gotoField(bloomField)
+			if (VBState=1)
+				break
+			Sleep 200
+			if (fieldNameForFunction == "clover" || fieldNameForFunction == "bamboo" || fieldNameForFunction == "pinetree" || fieldNameForFunction == "rose" || fieldNameForFunction == "blueflower") {
+				sendinput "{" RotLeft " 2}"
+				fieldYawDir := "Left"
+				fieldYawSteps := 2
+			}
+			else if (fieldNameForFunction == "strawberry") {
+				sendinput "{" RotLeft " 4}"
+				fieldYawDir := "Left"
+				fieldYawSteps := 4
+			}
+			else if (fieldNameForFunction == "dandelion") {
+				sendinput "{" RotRight " 2}"
+				fieldYawDir := "Right"
+				fieldYawSteps := 2
+			}
+			sendinput "{" RotUp " 10}"
+			if (FarmBloomSprinklerField) {
+				if (SprinklerType="Supreme" || SprinklerType="Basic")
+					Send "{" SC_1 "}"
+				else
+					nm_JumpSprinkler()
+			}
+			if (questStartY && questSlot)
+				nm_OpenMenu("questlog")
+			endTick += (A_TickCount - pauseStartTick)
+			falseStartTick := 0
+			didNoBloomAlign := false
+			phaseCounter := 1
+			isAligning := false
+			alignInterrupt := true
+			continue
+		}
+		if (nm_MondoInterrupt() || nm_GatherBoostInterrupt() || nm_BeesmasInterrupt() || nm_MemoryMatchInterrupt())
+			break
+		; quest progress polling (every 1s or 2s is fine)
+		if (questStartY && questSlot && (!lastQuestPoll || (A_TickCount - lastQuestPoll) >= 1000)) {
+			lastQuestPoll := A_TickCount
+			if (!nm_isQuestSlotIncomplete(questStartY, questSlot)) {
+				break
+			}
+		}
+		
+		if (!isAligning || alignInterrupt){
+			foundBloom := nma_farmBloom(fieldNameForFunction, FarmBloomSprinklerBloom, bloomCtx)
+			if (foundBloom) {
+				falseStartTick := 0
+				isAligning := false
+				didNoBloomAlign := false
+				phaseCounter := 1
+				bloomCtx["limitLeft"] := limitLeft
+				bloomCtx["limitRight"] := limitRight
+				bloomCtx["limitTop"] := limitTop
+				bloomCtx["limitBottom"] := limitBottom
+				Sleep 200
+				continue
+			}
+		}
+		
+		if (isAligning){
+			if ((fieldNameForFunction == "dandelion" && phaseCounter < 3) || (fieldNameForFunction == "cactus" && phaseCounter < 3)){
+				alignInterrupt := false
+			}
+			else{
+				alignInterrupt := true
+			}
+
+			if ((fieldNameForFunction == "clover" && phaseCounter < 5) || fieldNameForFunction == "sunflower" || fieldNameForFunction == "bamboo" || (fieldNameForFunction == "strawberry" && phaseCounter > 1) || (fieldNameForFunction == "pumpkin" && phaseCounter > 1) || (fieldNameForFunction == "cactus" && phaseCounter > 2)){
+				bloomCtx["limitLeft"] := 0
+				bloomCtx["limitRight"] := windowWidth
+				bloomCtx["limitTop"] := 0
+				bloomCtx["limitBottom"] := windowHeight
+			}
+			else{
+				bloomCtx["limitLeft"] := limitLeft
+				bloomCtx["limitRight"] := limitRight
+				bloomCtx["limitTop"] := limitTop
+				bloomCtx["limitBottom"] := limitBottom
+			}
+
+			value := FieldAlign[fieldNameForFunction][1][phaseCounter]
+			if (value != "" && value != -1){
+				nm_createWalk(' nm_Walk( ' FieldAlign[fieldNameForFunction][1][phaseCounter] ', ' FieldAlign[fieldNameForFunction][2][phaseCounter] ') ')
+				KeyWait "F14", "D T5 L"
+				KeyWait "F14", "T60 L"
+				nm_endWalk()
+				phaseCounter++
+			}
+			else{
+				isAligning := false
+				phaseCounter := 1
+				falseStartTick := 0
+			}
+		}
+
+		if (!falseStartTick)
+			falseStartTick := A_TickCount
+		
+		if (!didNoBloomAlign && (A_TickCount - falseStartTick) >= 6000) {
+			didNoBloomAlign := true
+			isAligning := true
+			phaseCounter := 1
+			falseStartTick := 0
+		}
+		
+		if (!isAligning){
+			if (phaseCounter != 1)
+				phaseCounter := 1
+			Sleep 100
+		}
+			
+	}
+	
+	nm_setStatus("Completed", "Bloom Farming: " . bloomField)
+	returnBy := (questStartY && questSlot) ? QuestGatherReturnBy : FarmBloomReturnBy
+	if (returnBy = "Reset")
+		nm_Reset()
+	else {
+		if (fieldYawDir == "Left")
+			sendinput "{" RotRight " " fieldYawSteps "}"
+		else if (fieldYawDir == "Right")
+			sendinput "{" RotLeft " " fieldYawSteps "}"
+		sendinput "{" RotDown " 4}"
+		nm_walkFrom(bloomField)
+	}
+	if (VBState=1)
+		return
+	nm_findHiveSlot()
+	nm_convert()
+}
 
 nma_farmBloom(field := "none", sprinkler := false, ctx := 0) {
 	screenCenterX := ctx["screenCenterX"]
@@ -23185,7 +23190,6 @@ nma_isBalloonBloomHit(foundX, foundY, windowWidth, windowHeight) {
 	local resultBalloonGreen := nm_imgSearch("addon/balloon green.png", 0, searchX, Round(windowWidth * 0.0234375), searchY, Round(windowHeight * 0.02922))
 	return (resultBalloonGreen[1] == 0)
 }
-
 nma_searchBorder(count, img, x, width, y, height){
 	notFound := false
 	Loop count {
