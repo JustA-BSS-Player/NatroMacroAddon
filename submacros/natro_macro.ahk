@@ -307,7 +307,7 @@ nm_importConfig()
 		, "BluePetalField", "Blue Flower"
 		, "WhitePetalField", "Dandelion"
 		, "CyanPetalField", "Pineapple"
-		, "GreenPetalField", "Cactus"
+		, "GreenPetalField", "Clover"
 		, "PinkPetalField", "Strawberry")
 
 	config["Settings"] := Map("GuiTheme", "MacLion3"
@@ -5986,15 +5986,6 @@ nm_QuestGatherReturnBy(GuiCtrl, *){
 	IniWrite QuestGatherReturnBy, "settings\nm_config.ini", "Quests", "QuestGatherReturnBy"
 }
 
-nm_FarmBloomReturnBy(GuiCtrl, *){
-	global FarmBloomReturnBy
-	static val := ["Walk", "Reset"], l := val.Length
-
-	i := (FarmBloomReturnBy = "Walk") ? 1 : 2
-
-	MainGui["FarmBloomReturnBy"].Text := FarmBloomReturnBy := val[(GuiCtrl.Name = "FBRBRight") ? (Mod(i, l) + 1) : (Mod(l + i - 2, l) + 1)]
-	IniWrite FarmBloomReturnBy, "settings\nm_config.ini", "Addon", "FarmBloomReturnBy"
-}
 
 ; PLANTERS TAB
 ; ------------------------
@@ -22987,6 +22978,16 @@ nm_FarmBloom(force := false, overrideField := "", questStartY := 0, questSlot :=
 		return
 	nm_findHiveSlot()
 	nm_convert()
+}
+
+nm_FarmBloomReturnBy(GuiCtrl, *){
+	global FarmBloomReturnBy
+	static val := ["Walk", "Reset"], l := val.Length
+
+	i := (FarmBloomReturnBy = "Walk") ? 1 : 2
+
+	MainGui["FarmBloomReturnBy"].Text := FarmBloomReturnBy := val[(GuiCtrl.Name = "FBRBRight") ? (Mod(i, l) + 1) : (Mod(l + i - 2, l) + 1)]
+	IniWrite FarmBloomReturnBy, "settings\nm_config.ini", "Addon", "FarmBloomReturnBy"
 }
 
 nma_farmBloom(field := "none", sprinkler := false, ctx := 0) {
