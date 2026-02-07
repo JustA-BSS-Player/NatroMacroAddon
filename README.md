@@ -9,6 +9,11 @@ It currently includes improvements around **Bloom farming** and **Bloom-related 
 - __Bloom farming__: in every cycle it collects petals on the selected field for the set duration.
 - __Bloom quests__: supports quests that require collecting bloom petals.
 
+## ▶️ YouTube
+__Check out my YouTube channel for tutorials and showcases:__
+
+[![YouTube](https://img.shields.io/badge/Watch%20on-YouTube-red?logo=youtube)](https://www.youtube.com/@JustA-BSS-Player)
+
 ## 🛠️ Installation
 _Basically the same as `Natro Macro`_
 
