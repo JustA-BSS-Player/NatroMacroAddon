@@ -8,7 +8,7 @@ It currently includes improvements around **Bloom farming** and **Bloom-related 
 
 | Description | Preview |
 |------------|---------|
-| **Bloom farming**<br/>In every cycle it collects petals on the selected field for the set duration.<br/><br/>**Bloom quests**<br/>Supports quests that require collecting bloom petals. | ![bloom farming gif](https://i.imgur.com/VnaSYjg.gif) |
+| **Bloom farming**<br/>In every cycle it collects petals on the selected field for the set duration.<br/><br/>**Bloom quests**<br/>Supports quests that require collecting bloom petals. | ![bloom farming gif](./other/bloom.gif) |
 
 ## ▶️ YouTube
 __Check out my YouTube channel for tutorials and showcases:__
